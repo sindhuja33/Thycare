@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bookings — CareConnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/components.css" />
+<link rel="stylesheet" href="css/animations.css" />
+<link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body class="min-h-screen bg-slate-50">
+
+<div class="flex">
+  <aside id="sidebar"></aside>
+
+  <div class="desktop-main">
+    <header class="hidden lg:flex items-center justify-between px-8 py-5 glass border-b border-slate-100 sticky top-0 z-30">
+      <div>
+        <h1 class="text-xl font-extrabold text-slate-900">Bookings</h1>
+        <p class="text-sm text-slate-500 mt-0.5">Track all your home care bookings in one place.</p>
+      </div>
+      <a href="booking.html" class="btn-primary px-5 py-2.5 text-sm flex items-center gap-2">
+        <i data-lucide="plus" class="w-4 h-4"></i> New Booking
+      </a>
+    </header>
+
+    <main class="page-container content-scroll">
+      <header class="lg:hidden sticky top-0 z-30 glass px-4 py-4 border-b border-slate-100 flex items-center gap-3">
+        <a href="home.html" class="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center">
+          <i data-lucide="arrow-left" class="w-4 h-4 text-slate-600"></i>
+        </a>
+        <h1 class="font-bold text-slate-900">Bookings</h1>
+      </header>
+
+      <div class="px-4 lg:px-8 pt-5">
+        <!-- Tabs -->
+        <div class="flex gap-2 overflow-x-auto no-scrollbar" id="tabs"></div>
+      </div>
+
+      <div class="px-4 lg:px-8 py-5">
+        <div id="bookings-list" class="space-y-3"></div>
+        <div id="empty-state" class="hidden card p-10 text-center">
+          <i data-lucide="calendar-x" class="w-10 h-10 text-slate-300 mx-auto mb-3"></i>
+          <p class="font-semibold text-slate-700" id="empty-title">No bookings found</p>
+          <p class="text-sm text-slate-500 mt-1">Your bookings in this category will appear here.</p>
+          <a href="booking.html" class="btn-primary px-5 py-2.5 text-sm mt-4 inline-block">Book a Service</a>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<nav id="bottom-nav"></nav>
+<a href="booking.html" class="fab brand-gradient mobile-only press-scale">
+  <i data-lucide="plus" class="w-6 h-6 text-white"></i>
+</a>
+
+<script src="js/mockData.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script>
+  UI.requireAuth();
+  UI.initShell("bookings");
+
+  const tabDefs = [
+    { key: "all", label: "All" },
+    { key: "upcoming", label: "Upcoming" },
+    { key: "completed", label: "Completed" },
+    { key: "cancelled", label: "Cancelled" },
+    { key: "rejected", label: "Rejected" }
+  ];
+  let activeTab = "all";
+
+  const iconMap = {
+    "Patient Attender": "user-round", "Baby Sitter": "baby", "Elder Care": "heart-handshake",
+    "Mother Care": "flower", "Post Surgery Care": "bandage", "Nursing Assistant": "stethoscope"
+  };
+
+  function renderTabs() {
+    document.getElementById("tabs").innerHTML = tabDefs.map(t => `
+      <button onclick="setTab('${t.key}')" class="shrink-0 px-4 py-2 rounded-xl text-sm font-semibold press-scale ${activeTab === t.key ? "brand-gradient text-white" : "bg-white text-slate-600 border border-slate-200"}">
+        ${t.label}
+      </button>
+    `).join("");
+  }
+  function setTab(key) { activeTab = key; renderTabs(); renderList(); }
+
+  function renderList() {
+    let bookings = Store.getBookings();
+    if (activeTab !== "all") bookings = bookings.filter(b => b.status === activeTab);
+
+    const listEl = document.getElementById("bookings-list");
+    const emptyEl = document.getElementById("empty-state");
+
+    if (bookings.length === 0) {
+      listEl.innerHTML = "";
+      emptyEl.classList.remove("hidden");
+      document.getElementById("empty-title").textContent = activeTab === "all" ? "No bookings yet" : `No ${activeTab} bookings`;
+    } else {
+      emptyEl.classList.add("hidden");
+      listEl.innerHTML = bookings.map(b => `
+        <a href="booking-details.html?id=${b.id}" class="card p-4 block hover-lift press-scale animate-fade-in-up">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                <i data-lucide="${iconMap[b.service] || "stethoscope"}" class="w-5 h-5 text-blue-600"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="font-bold text-slate-900 text-sm truncate">${b.service}</p>
+                <p class="text-xs text-slate-500 mt-0.5">${b.id}</p>
+              </div>
+            </div>
+            ${UI.statusBadge(b.status)}
+          </div>
+          <div class="divider my-3"></div>
+          <div class="grid grid-cols-3 gap-2 text-xs">
+            <div>
+              <p class="text-slate-400">Patient</p>
+              <p class="font-semibold text-slate-700 mt-0.5 truncate">${b.patient}</p>
+            </div>
+            <div>
+              <p class="text-slate-400">Date</p>
+              <p class="font-semibold text-slate-700 mt-0.5">${UI.formatDate(b.date)}</p>
+            </div>
+            <div>
+              <p class="text-slate-400">Amount</p>
+              <p class="font-semibold text-slate-700 mt-0.5">${UI.formatCurrency(b.amount)}</p>
+            </div>
+          </div>
+        </a>
+      `).join("");
+    }
+    UI.icons();
+  }
+
+  renderTabs();
+  renderList();
+</script>
+</body>
+</html>

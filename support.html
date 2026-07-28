@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Support — CareConnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/components.css" />
+<link rel="stylesheet" href="css/animations.css" />
+<link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body class="min-h-screen bg-slate-50">
+
+<div class="flex">
+  <aside id="sidebar"></aside>
+
+  <div class="desktop-main">
+    <header class="hidden lg:flex items-center px-8 py-5 glass border-b border-slate-100 sticky top-0 z-30">
+      <h1 class="text-xl font-extrabold text-slate-900">Support</h1>
+    </header>
+
+    <main class="page-container content-scroll max-w-2xl">
+      <header class="lg:hidden sticky top-0 z-30 glass px-4 py-4 border-b border-slate-100 flex items-center gap-3">
+        <a href="home.html" class="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center">
+          <i data-lucide="arrow-left" class="w-4 h-4 text-slate-600"></i>
+        </a>
+        <h1 class="font-bold text-slate-900">Support</h1>
+      </header>
+
+      <div class="px-4 lg:px-8 py-6">
+
+        <div class="grid grid-cols-2 gap-4 animate-fade-in-up">
+          <button onclick="callSupport()" class="card p-5 text-center hover-lift press-scale">
+            <div class="w-12 h-12 rounded-2xl bg-green-50 flex items-center justify-center mx-auto mb-2.5">
+              <i data-lucide="phone-call" class="w-6 h-6 text-green-600"></i>
+            </div>
+            <p class="font-bold text-slate-900 text-sm">Call Us</p>
+            <p class="text-xs text-slate-500 mt-0.5">1800-123-4567</p>
+          </button>
+          <button onclick="emailSupport()" class="card p-5 text-center hover-lift press-scale">
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-2.5">
+              <i data-lucide="mail" class="w-6 h-6 text-blue-600"></i>
+            </div>
+            <p class="font-bold text-slate-900 text-sm">Email Us</p>
+            <p class="text-xs text-slate-500 mt-0.5">support@careconnect.in</p>
+          </button>
+        </div>
+
+        <!-- Chat -->
+        <div class="card mt-5 flex flex-col h-[440px] overflow-hidden animate-fade-in-up stagger-1">
+          <div class="px-4 py-3.5 border-b border-slate-100 flex items-center gap-2.5 brand-gradient-soft">
+            <div class="w-9 h-9 rounded-full brand-gradient flex items-center justify-center">
+              <i data-lucide="headset" class="w-4 h-4 text-white"></i>
+            </div>
+            <div>
+              <p class="text-sm font-bold text-slate-800">CareConnect Support</p>
+              <p class="text-[11px] text-green-600 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>Online</p>
+            </div>
+          </div>
+          <div id="chat-body" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
+          <div class="p-3 border-t border-slate-100 flex items-center gap-2">
+            <input id="chat-input" class="input-field flex-1" placeholder="Type your message…" onkeydown="if(event.key==='Enter') sendChat()" />
+            <button onclick="sendChat()" class="w-11 h-11 rounded-xl brand-gradient flex items-center justify-center shrink-0 press-scale">
+              <i data-lucide="send" class="w-4 h-4 text-white"></i>
+            </button>
+          </div>
+        </div>
+
+        <a href="faq.html" class="card p-4 flex items-center justify-between mt-5 hover-lift press-scale">
+          <span class="flex items-center gap-3 text-sm font-semibold text-slate-700"><i data-lucide="help-circle" class="w-4 h-4 text-slate-500"></i>Browse FAQs</span>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+        </a>
+      </div>
+    </main>
+  </div>
+</div>
+
+<nav id="bottom-nav"></nav>
+
+<script src="js/mockData.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script>
+  UI.requireAuth();
+  UI.initShell("support");
+
+  function callSupport() { UI.toast("Calling 1800-123-4567…", "info"); }
+  function emailSupport() { UI.toast("Opening email to support@careconnect.in…", "info"); }
+
+  const chatBody = document.getElementById("chat-body");
+  const botReplies = [
+    "Thanks for reaching out! Let me check that for you.",
+    "I understand. Could you share your booking ID so I can look into it?",
+    "You can track your caregiver's arrival from the Bookings page once assigned.",
+    "I've noted your concern — our team will follow up within 24 hours.",
+    "Is there anything else I can help you with today?"
+  ];
+
+  function addBubble(text, isUser) {
+    const div = document.createElement("div");
+    div.className = `flex ${isUser ? "justify-end" : "justify-start"} animate-fade-in-up`;
+    div.innerHTML = `<div class="max-w-[75%] px-3.5 py-2.5 rounded-2xl text-sm ${isUser ? "brand-gradient text-white rounded-br-sm" : "bg-slate-100 text-slate-700 rounded-bl-sm"}">${text}</div>`;
+    chatBody.appendChild(div);
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+
+  function addTyping() {
+    const div = document.createElement("div");
+    div.id = "typing-bubble";
+    div.className = "flex justify-start";
+    div.innerHTML = `<div class="bg-slate-100 px-4 py-3 rounded-2xl rounded-bl-sm flex gap-1">
+      <span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-pulse-soft"></span>
+      <span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-pulse-soft" style="animation-delay:.15s"></span>
+      <span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-pulse-soft" style="animation-delay:.3s"></span>
+    </div>`;
+    chatBody.appendChild(div);
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+
+  function sendChat() {
+    const input = document.getElementById("chat-input");
+    const text = input.value.trim();
+    if (!text) return;
+    addBubble(text, true);
+    input.value = "";
+    addTyping();
+    setTimeout(() => {
+      document.getElementById("typing-bubble")?.remove();
+      addBubble(botReplies[Math.floor(Math.random() * botReplies.length)], false);
+    }, 1300);
+  }
+
+  addBubble("Hi Sindhuja! 👋 I'm your CareConnect support assistant. How can I help you today?", false);
+</script>
+</body>
+</html>

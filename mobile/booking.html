@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Book a Service — CareConnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="css/design-system.css" />
+<link rel="stylesheet" href="css/animations.css" />
+</head>
+<body class="bg-[var(--canvas)]">
+
+<div class="app-frame">
+  <header class="app-topbar px-5 pb-3 flex items-center gap-3">
+    <button onclick="prevStep()" class="nav-btn"><i data-lucide="arrow-left" class="w-[18px] h-[18px]"></i></button>
+    <div class="flex-1">
+      <h1 class="font-extrabold text-[16px] text-[var(--ink-900)] tracking-tight" id="step-title">Choose Service</h1>
+      <p class="text-[11.5px] text-[var(--ink-400)] font-semibold" id="step-sub">Step 1 of 7</p>
+    </div>
+  </header>
+
+  <div class="flex items-center gap-1.5 px-5 py-3" id="step-dots"></div>
+
+  <main class="px-5 pb-[168px]">
+
+    <section id="step-1" class="step-panel space-y-3 anim-fade-up"></section>
+    <section id="step-2" class="step-panel hidden space-y-3 anim-fade-up"></section>
+
+    <section id="step-3" class="step-panel hidden anim-fade-up">
+      <p class="text-[13.5px] font-bold text-[var(--ink-700)] mb-2.5">Select Date</p>
+      <div class="flex gap-2.5 overflow-x-auto no-scrollbar pb-2 -mx-5 px-5" id="date-strip"></div>
+      <p class="text-[13.5px] font-bold text-[var(--ink-700)] mt-6 mb-2.5">Select Time</p>
+      <div class="grid grid-cols-3 gap-2.5" id="time-grid"></div>
+      <div id="urgent-warning" class="hidden mt-4 flex items-center gap-2.5 bg-[var(--amber-50)] text-[var(--amber-600)] text-[12.5px] font-semibold px-4 py-3.5 rounded-2xl">
+        <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i> Booking within 24 hours may have limited caregiver availability.
+      </div>
+    </section>
+
+    <section id="step-4" class="step-panel hidden space-y-3 anim-fade-up"></section>
+
+    <section id="step-5" class="step-panel hidden anim-fade-up">
+      <p class="text-[13.5px] font-bold text-[var(--ink-700)] mb-2.5">Special Requirements</p>
+      <textarea id="requirements-input" rows="4" class="field resize-none" placeholder="e.g. Patient needs help with mobility, prefers Tamil-speaking caregiver…"></textarea>
+      <p class="text-[13.5px] font-bold text-[var(--ink-700)] mt-6 mb-2.5">Upload Medical Reports (optional)</p>
+      <div id="upload-zone" onclick="simulateUpload()" class="border-2 border-dashed border-[var(--ink-200,var(--ink-300))] rounded-[20px] p-7 text-center cursor-pointer active:bg-[var(--blue-50)] active:border-[var(--blue-500)] transition">
+        <i data-lucide="upload-cloud" class="w-8 h-8 text-[var(--ink-400)] mx-auto mb-2"></i>
+        <p class="text-[13.5px] font-bold text-[var(--ink-600)]">Tap to upload files</p>
+        <p class="text-[11.5px] text-[var(--ink-400)] mt-1 font-medium">PDF, JPG up to 10MB</p>
+      </div>
+      <div id="uploaded-files" class="space-y-2 mt-3"></div>
+    </section>
+
+    <section id="step-6" class="step-panel hidden space-y-3 anim-fade-up"></section>
+    <section id="step-7" class="step-panel hidden anim-fade-up"></section>
+
+  </main>
+
+  <div class="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto glass border-t border-[var(--ink-100)] px-5 pt-4" style="padding-bottom: calc(16px + var(--safe-bottom))">
+    <button onclick="nextStep()" id="continue-btn" class="btn btn-primary w-full press">
+      <span id="continue-label">Continue</span>
+    </button>
+  </div>
+</div>
+
+<script src="js/mockData.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script>
+  UI.requireAuth();
+  UI.applyDarkMode();
+
+  const TOTAL_STEPS = 7;
+  let currentStep = 1;
+  const draft = { serviceId: null, patientId: null, date: null, time: null, duration: null, requirements: "", files: [], addressId: "home" };
+
+  const urlParams = new URLSearchParams(location.search);
+  if (urlParams.get("service")) draft.serviceId = urlParams.get("service");
+  if (urlParams.get("patient")) draft.patientId = urlParams.get("patient");
+
+  const durations = [
+    { id: "4h", label: "4 Hours", desc: "Short visit", mult: 0.4 },
+    { id: "8h", label: "8 Hours", desc: "Half day", mult: 0.7 },
+    { id: "12h", label: "12 Hours", desc: "Full shift", mult: 1 },
+    { id: "24h", label: "24 Hours", desc: "Full day", mult: 1.8 }
+  ];
+  const addresses = [
+    { id: "home", label: "Home", icon: "home", address: Store.getUser().address, outOfArea: false },
+    { id: "parents", label: "Parents' House", icon: "building-2", address: "45, Green Park Colony, T. Nagar, Chennai, Tamil Nadu 600017", outOfArea: false },
+    { id: "farhouse", label: "Native Village", icon: "map-pin", address: "Village Road, Thanjavur, Tamil Nadu 613001", outOfArea: true }
+  ];
+
+  function renderStepDots() {
+    document.getElementById("step-dots").innerHTML = Array.from({ length: TOTAL_STEPS }, (_, i) => {
+      const n = i + 1;
+      const cls = n === currentStep ? "active" : n < currentStep ? "done" : "";
+      return `<span class="step-dot ${cls}"></span>`;
+    }).join("");
+  }
+  const stepTitles = ["", "Choose Service", "Choose Patient", "Date & Time", "Duration", "Requirements", "Home Address", "Review Booking"];
+
+  function optionCard(selected, inner) {
+    return `class="w-full text-left card p-3.5 flex items-center gap-3.5 press ${selected ? "!border-[var(--blue-500)] !border-2 bg-gradient-to-br from-[var(--blue-50)] to-transparent" : ""}"`;
+  }
+
+  function renderStep1() {
+    document.getElementById("step-1").innerHTML = MOCK.services.map(s => `
+      <button onclick="selectService('${s.id}')" ${optionCard(draft.serviceId === s.id)}>
+        <img src="${s.image}" class="w-16 h-16 rounded-2xl object-cover shrink-0" />
+        <div class="min-w-0 flex-1">
+          <p class="font-extrabold text-[var(--ink-900)] text-[14.5px] tracking-tight">${s.name}</p>
+          <p class="text-[12px] text-[var(--ink-500)] mt-0.5 line-clamp-1 font-medium">${s.description}</p>
+          <p class="text-[14px] font-extrabold text-[var(--blue-600)] mt-1.5">${UI.formatCurrency(s.startingPrice)}<span class="text-[10.5px] font-semibold text-[var(--ink-400)]"> ${s.unit}</span></p>
+        </div>
+        <i data-lucide="${draft.serviceId === s.id ? "check-circle-2" : "circle"}" class="w-5 h-5 ${draft.serviceId === s.id ? "text-[var(--blue-600)]" : "text-[var(--ink-300)]"} shrink-0"></i>
+      </button>`).join("");
+    UI.icons();
+  }
+  function selectService(id) { draft.serviceId = id; renderStep1(); }
+
+  function renderStep2() {
+    const patients = Store.getPatients();
+    if (patients.length === 0) {
+      document.getElementById("step-2").innerHTML = `
+        <div class="card p-8 text-center">
+          <i data-lucide="user-x" class="w-9 h-9 text-[var(--ink-300)] mx-auto mb-3"></i>
+          <p class="font-extrabold text-[var(--ink-800)] text-[14.5px]">No patients found</p>
+          <p class="text-[13px] text-[var(--ink-500)] mt-1 font-medium">Add a patient profile before booking a service.</p>
+          <a href="patients.html" class="btn btn-primary mt-5 !px-6 !min-h-[46px] inline-flex">Add Patient</a>
+        </div>`;
+      return;
+    }
+    document.getElementById("step-2").innerHTML = patients.map(p => `
+      <button onclick="selectPatient('${p.id}')" ${optionCard(draft.patientId === p.id)}>
+        <img src="${p.photo}" class="w-14 h-14 rounded-2xl object-cover shrink-0" />
+        <div class="min-w-0 flex-1">
+          <p class="font-extrabold text-[var(--ink-900)] text-[14.5px] tracking-tight">${p.name}</p>
+          <p class="text-[12px] text-[var(--ink-500)] mt-0.5 font-medium">${p.relationship} • ${p.age} ${typeof p.age === "number" ? "years" : ""}</p>
+        </div>
+        <i data-lucide="${draft.patientId === p.id ? "check-circle-2" : "circle"}" class="w-5 h-5 ${draft.patientId === p.id ? "text-[var(--blue-600)]" : "text-[var(--ink-300)]"} shrink-0"></i>
+      </button>`).join("");
+    UI.icons();
+  }
+  function selectPatient(id) { draft.patientId = id; renderStep2(); }
+
+  function renderStep3() {
+    const days = [];
+    for (let i = 0; i < 10; i++) { const d = new Date(); d.setDate(d.getDate() + i); days.push(d); }
+    document.getElementById("date-strip").innerHTML = days.map(d => {
+      const iso = d.toISOString().slice(0, 10);
+      const isSel = draft.date === iso;
+      return `<button onclick="selectDate('${iso}')" class="shrink-0 w-[62px] py-3.5 rounded-[20px] border-2 flex flex-col items-center gap-0.5 press ${isSel ? "border-[var(--blue-500)] hero-gradient text-white" : "border-[var(--ink-100)] bg-[var(--surface)] text-[var(--ink-700)]"}">
+        <span class="text-[10px] font-bold ${isSel ? "text-white/75" : "text-[var(--ink-400)]"}">${d.toLocaleDateString("en-IN", { weekday: "short" })}</span>
+        <span class="text-[18px] font-extrabold">${d.getDate()}</span>
+        <span class="text-[10px] font-bold ${isSel ? "text-white/75" : "text-[var(--ink-400)]"}">${d.toLocaleDateString("en-IN", { month: "short" })}</span>
+      </button>`;
+    }).join("");
+
+    const times = ["06:00 AM", "08:00 AM", "10:00 AM", "12:00 PM", "02:00 PM", "04:00 PM", "06:00 PM", "08:00 PM", "10:00 PM"];
+    document.getElementById("time-grid").innerHTML = times.map(t => `
+      <button onclick="selectTime('${t}')" class="py-3 rounded-2xl border-2 text-[13px] font-bold press ${draft.time === t ? "border-[var(--blue-500)] hero-gradient text-white" : "border-[var(--ink-100)] bg-[var(--surface)] text-[var(--ink-600)]"}">${t}</button>
+    `).join("");
+    checkUrgent();
+  }
+  function selectDate(iso) { draft.date = iso; renderStep3(); }
+  function selectTime(t) { draft.time = t; renderStep3(); }
+  function checkUrgent() {
+    const warn = document.getElementById("urgent-warning");
+    if (!draft.date) { warn.classList.add("hidden"); return; }
+    const hours = (new Date(draft.date) - new Date()) / 36e5;
+    warn.classList.toggle("hidden", hours > 24);
+  }
+
+  function renderStep4() {
+    const service = MOCK.services.find(s => s.id === draft.serviceId);
+    const base = service ? service.startingPrice : 999;
+    document.getElementById("step-4").innerHTML = durations.map(d => `
+      <button onclick="selectDuration('${d.id}')" ${optionCard(draft.duration === d.id).replace("items-center gap-3.5", "justify-between")}>
+        <div>
+          <p class="font-extrabold text-[var(--ink-900)] text-[14.5px] tracking-tight">${d.label}</p>
+          <p class="text-[12px] text-[var(--ink-500)] mt-0.5 font-medium">${d.desc}</p>
+        </div>
+        <div class="text-right flex flex-col items-end gap-1">
+          <p class="font-extrabold text-[var(--blue-600)] text-[14px]">${UI.formatCurrency(Math.round(base * d.mult))}</p>
+          <i data-lucide="${draft.duration === d.id ? "check-circle-2" : "circle"}" class="w-5 h-5 ${draft.duration === d.id ? "text-[var(--blue-600)]" : "text-[var(--ink-300)]"}"></i>
+        </div>
+      </button>`).join("");
+    UI.icons();
+  }
+  function selectDuration(id) { draft.duration = id; renderStep4(); }
+
+  function simulateUpload() {
+    const names = ["Blood_Report.pdf", "Prescription.jpg", "Discharge_Summary.pdf", "Scan_Report.pdf"];
+    const name = names[Math.floor(Math.random() * names.length)];
+    draft.files.push({ name, size: (Math.random() * 3 + 0.4).toFixed(1) + " MB" });
+    renderFiles();
+    UI.toast("File uploaded", "success");
+  }
+  function renderFiles() {
+    document.getElementById("uploaded-files").innerHTML = draft.files.map((f, i) => `
+      <div class="flex items-center justify-between card p-3.5">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <i data-lucide="file-check" class="w-4 h-4 text-[var(--green-600)] shrink-0"></i>
+          <span class="text-[13px] font-semibold text-[var(--ink-700)] truncate">${f.name}</span>
+          <span class="text-[11px] text-[var(--ink-400)] font-medium shrink-0">${f.size}</span>
+        </div>
+        <button onclick="removeFile(${i})"><i data-lucide="x" class="w-4 h-4 text-[var(--ink-400)]"></i></button>
+      </div>`).join("");
+    UI.icons();
+  }
+  function removeFile(i) { draft.files.splice(i, 1); renderFiles(); }
+
+  function renderStep6() {
+    document.getElementById("step-6").innerHTML = addresses.map(a => `
+      <button onclick="selectAddress('${a.id}')" ${optionCard(draft.addressId === a.id)}>
+        <div class="w-11 h-11 rounded-2xl bg-[var(--blue-50)] flex items-center justify-center shrink-0">
+          <i data-lucide="${a.icon}" class="w-5 h-5 text-[var(--blue-600)]"></i>
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2">
+            <p class="font-extrabold text-[var(--ink-900)] text-[14.5px] tracking-tight">${a.label}</p>
+            ${a.outOfArea ? `<span class="badge badge-red !text-[9.5px] !py-0.5">Outside Area</span>` : ""}
+          </div>
+          <p class="text-[12px] text-[var(--ink-500)] mt-0.5 truncate font-medium">${a.address}</p>
+        </div>
+        <i data-lucide="${draft.addressId === a.id ? "check-circle-2" : "circle"}" class="w-5 h-5 ${draft.addressId === a.id ? "text-[var(--blue-600)]" : "text-[var(--ink-300)]"} shrink-0"></i>
+      </button>`).join("") + `
+      <button onclick="UI.toast('GPS is disabled. Enable location to add a new address.','error')" class="w-full text-left card p-3.5 flex items-center gap-3 press border-dashed">
+        <div class="w-11 h-11 rounded-2xl bg-[var(--ink-50)] flex items-center justify-center shrink-0">
+          <i data-lucide="plus" class="w-5 h-5 text-[var(--ink-500)]"></i>
+        </div>
+        <p class="font-bold text-[var(--ink-600)] text-[14px]">Add New Address</p>
+      </button>`;
+    UI.icons();
+  }
+  function selectAddress(id) { draft.addressId = id; renderStep6(); }
+
+  function renderStep7() {
+    const service = MOCK.services.find(s => s.id === draft.serviceId);
+    const patient = Store.getPatients().find(p => p.id === draft.patientId);
+    const duration = durations.find(d => d.id === draft.duration);
+    const address = addresses.find(a => a.id === draft.addressId);
+    const base = service ? service.startingPrice : 999;
+    const amount = duration ? Math.round(base * duration.mult) : base;
+    const plan = MOCK.plans.find(p => p.id === Store.getPlan());
+    const discountPct = plan?.id === "plan-premium" ? 10 : plan?.id === "plan-premium-plus" ? 20 : 0;
+    const discount = Math.round(amount * discountPct / 100);
+    const total = amount - discount;
+
+    Store.setDraftBooking({ ...draft, amount: total, baseAmount: amount, discount });
+
+    document.getElementById("step-7").innerHTML = `
+      <div class="card p-4 space-y-3">
+        <div class="flex items-center justify-between"><p class="text-[12px] text-[var(--ink-500)] font-semibold">Service</p><p class="text-[13.5px] font-bold text-[var(--ink-800)]">${service?.name || "—"}</p></div>
+        <div class="flex items-center justify-between"><p class="text-[12px] text-[var(--ink-500)] font-semibold">Patient</p><p class="text-[13.5px] font-bold text-[var(--ink-800)]">${patient?.name || "—"}</p></div>
+        <div class="flex items-center justify-between"><p class="text-[12px] text-[var(--ink-500)] font-semibold">Date & Time</p><p class="text-[13.5px] font-bold text-[var(--ink-800)]">${draft.date ? UI.formatDate(draft.date) : "—"}, ${draft.time || "—"}</p></div>
+        <div class="flex items-center justify-between"><p class="text-[12px] text-[var(--ink-500)] font-semibold">Duration</p><p class="text-[13.5px] font-bold text-[var(--ink-800)]">${duration?.label || "—"}</p></div>
+        <div class="flex items-center justify-between"><p class="text-[12px] text-[var(--ink-500)] font-semibold">Address</p><p class="text-[13.5px] font-bold text-[var(--ink-800)] text-right max-w-[60%]">${address?.label || "—"}</p></div>
+        ${draft.requirements ? `<div class="divider"></div><div><p class="text-[12px] text-[var(--ink-500)] font-semibold mb-1">Requirements</p><p class="text-[13px] text-[var(--ink-700)] font-medium">${draft.requirements}</p></div>` : ""}
+      </div>
+
+      <div class="card p-4 mt-4">
+        <p class="text-[13.5px] font-extrabold text-[var(--ink-800)] mb-3">Fare Summary</p>
+        <div class="flex items-center justify-between text-[13px] mb-1.5 font-medium"><span class="text-[var(--ink-500)]">Base Amount</span><span class="text-[var(--ink-700)]">${UI.formatCurrency(amount)}</span></div>
+        ${discount > 0 ? `<div class="flex items-center justify-between text-[13px] mb-1.5 font-medium"><span class="text-[var(--ink-500)]">${plan.name} Discount (${discountPct}%)</span><span class="text-[var(--green-600)]">-${UI.formatCurrency(discount)}</span></div>` : ""}
+        <div class="divider my-2.5"></div>
+        <div class="flex items-center justify-between"><span class="font-extrabold text-[var(--ink-900)]">Total Payable</span><span class="font-extrabold text-[var(--blue-600)] text-[19px]">${UI.formatCurrency(total)}</span></div>
+      </div>
+
+      <div class="flex items-center gap-2 mt-4 text-[12px] text-[var(--ink-500)] font-medium">
+        <i data-lucide="shield-check" class="w-4 h-4 text-[var(--green-600)] shrink-0"></i>
+        Caregiver assigned by admin after submission. Payment collected after assignment.
+      </div>
+    `;
+    UI.icons();
+  }
+
+  function validateStep() {
+    if (currentStep === 1 && !draft.serviceId) { UI.toast("Please select a service", "error"); return false; }
+    if (currentStep === 2 && !draft.patientId) { UI.toast("Please select a patient", "error"); return false; }
+    if (currentStep === 3 && (!draft.date || !draft.time)) { UI.toast("Please select date and time", "error"); return false; }
+    if (currentStep === 4 && !draft.duration) { UI.toast("Please select duration", "error"); return false; }
+    if (currentStep === 6 && addresses.find(a => a.id === draft.addressId)?.outOfArea) { UI.toast("This address is outside our service area", "error"); return false; }
+    return true;
+  }
+
+  function showStep(n) {
+    document.querySelectorAll(".step-panel").forEach(el => el.classList.add("hidden"));
+    document.getElementById("step-" + n).classList.remove("hidden");
+    document.getElementById("step-title").textContent = stepTitles[n];
+    document.getElementById("step-sub").textContent = `Step ${n} of ${TOTAL_STEPS}`;
+    document.getElementById("continue-label").textContent = n === TOTAL_STEPS ? "Submit Booking" : "Continue";
+    renderStepDots();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (n === 1) renderStep1(); if (n === 2) renderStep2(); if (n === 3) renderStep3();
+    if (n === 4) renderStep4(); if (n === 6) renderStep6(); if (n === 7) renderStep7();
+  }
+
+  function nextStep() {
+    if (!validateStep()) return;
+    if (currentStep < TOTAL_STEPS) { currentStep++; showStep(currentStep); }
+    else submitBooking();
+  }
+  function prevStep() {
+    if (currentStep === 1) { window.location.href = "home.html"; return; }
+    currentStep--; showStep(currentStep);
+  }
+  function submitBooking() {
+    document.getElementById("continue-btn").disabled = true;
+    document.getElementById("continue-label").innerHTML = `<span class="spinner w-4 h-4"></span> Submitting…`;
+    UI.simulateApi({ success: true, delay: 1500 }).then(() => {
+      window.location.href = "booking-confirmation.html?stage=pending";
+    });
+  }
+
+  document.getElementById("requirements-input")?.addEventListener("input", (e) => draft.requirements = e.target.value);
+  showStep(1);
+</script>
+</body>
+</html>

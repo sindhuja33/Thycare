@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Payment — CareConnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/components.css" />
+<link rel="stylesheet" href="css/animations.css" />
+<link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body class="min-h-screen bg-slate-50">
+
+<div class="max-w-xl mx-auto min-h-screen">
+  <header class="sticky top-0 z-30 glass px-4 py-4 border-b border-slate-100 flex items-center gap-3">
+    <a href="booking-confirmation.html?stage=assigned" class="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center">
+      <i data-lucide="arrow-left" class="w-4 h-4 text-slate-600"></i>
+    </a>
+    <h1 class="font-bold text-slate-900">Payment</h1>
+  </header>
+
+  <main class="px-4 py-6 pb-40">
+
+    <!-- Amount summary -->
+    <div class="card p-5 text-center brand-gradient-soft border-blue-100 animate-fade-in-up">
+      <p class="text-xs text-slate-500 font-medium">Amount Payable</p>
+      <p class="text-4xl font-extrabold text-slate-900 mt-1" id="amount-display">₹999</p>
+      <p class="text-xs text-slate-400 mt-1" id="booking-id-display">Booking CC-BK-88213</p>
+    </div>
+
+    <!-- Payment methods -->
+    <div class="mt-6 animate-fade-in-up stagger-1">
+      <p class="text-sm font-semibold text-slate-700 mb-2.5">Select Payment Method</p>
+      <div class="space-y-2.5" id="methods-list"></div>
+    </div>
+
+    <!-- Card details (shown when card selected) -->
+    <div id="card-details" class="hidden mt-4 card p-4 space-y-3 animate-fade-in-up">
+      <div>
+        <label class="text-xs font-semibold text-slate-600 mb-1 block">Card Number</label>
+        <input value="4242 4242 4242 4242" class="input-field w-full" readonly />
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs font-semibold text-slate-600 mb-1 block">Expiry</label>
+          <input value="12/28" class="input-field w-full" readonly />
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-600 mb-1 block">CVV</label>
+          <input value="•••" class="input-field w-full" readonly />
+        </div>
+      </div>
+    </div>
+
+    <div id="upi-details" class="hidden mt-4 card p-4 animate-fade-in-up">
+      <label class="text-xs font-semibold text-slate-600 mb-1 block">UPI ID</label>
+      <input value="sindhuja@okhdfcbank" class="input-field w-full" readonly />
+    </div>
+
+    <!-- Failure banner -->
+    <div id="fail-banner" class="hidden mt-5 flex items-start gap-2.5 bg-red-50 text-red-600 text-sm font-medium px-4 py-3.5 rounded-xl">
+      <i data-lucide="alert-circle" class="w-4 h-4 mt-0.5 shrink-0"></i>
+      <div>
+        <p>Payment failed</p>
+        <p class="text-xs font-normal text-red-500 mt-0.5">Your bank declined the transaction. Please try again or use a different method.</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 mt-6 text-xs text-slate-500 justify-center">
+      <i data-lucide="lock" class="w-3.5 h-3.5" ></i> 256-bit encrypted secure payment
+    </div>
+  </main>
+
+  <div class="fixed bottom-0 left-0 right-0 max-w-xl mx-auto glass border-t border-slate-100 px-4 py-4">
+    <button onclick="pay()" id="pay-btn" class="btn-primary w-full py-3.5 flex items-center justify-center gap-2 press-scale">
+      <span id="pay-label">Pay Now</span>
+    </button>
+  </div>
+</div>
+
+<script src="js/mockData.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script>
+  UI.requireAuth();
+
+  const params = new URLSearchParams(location.search);
+  const bookingId = params.get("id") || "CC-BK-" + Math.floor(80000 + Math.random() * 9999);
+  const caregiverId = params.get("caregiver");
+  const draft = Store.getDraftBooking();
+  const amount = draft.amount || 999;
+
+  document.getElementById("amount-display").textContent = UI.formatCurrency(amount);
+  document.getElementById("booking-id-display").textContent = "Booking " + bookingId;
+
+  const methods = [
+    { id: "upi", label: "UPI", desc: "Google Pay, PhonePe, Paytm", icon: "smartphone" },
+    { id: "card", label: "Credit / Debit Card", desc: "Visa, Mastercard, RuPay", icon: "credit-card" },
+    { id: "netbanking", label: "Net Banking", desc: "All major banks", icon: "landmark" },
+    { id: "wallet", label: "CareConnect Wallet", desc: "Balance: ₹250", icon: "wallet" }
+  ];
+  let selectedMethod = "upi";
+
+  function renderMethods() {
+    document.getElementById("methods-list").innerHTML = methods.map(m => `
+      <button onclick="selectMethod('${m.id}')" class="w-full text-left card p-3.5 flex items-center gap-3.5 press-scale ${selectedMethod === m.id ? '!border-blue-500 !border-2' : ''}">
+        <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+          <i data-lucide="${m.icon}" class="w-[18px] h-[18px] text-blue-600"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-slate-800">${m.label}</p>
+          <p class="text-xs text-slate-500">${m.desc}</p>
+        </div>
+        <i data-lucide="${selectedMethod === m.id ? 'check-circle-2' : 'circle'}" class="w-5 h-5 ${selectedMethod === m.id ? 'text-blue-600' : 'text-slate-300'} shrink-0"></i>
+      </button>
+    `).join("");
+    document.getElementById("card-details").classList.toggle("hidden", selectedMethod !== "card");
+    document.getElementById("upi-details").classList.toggle("hidden", selectedMethod !== "upi");
+    UI.icons();
+  }
+  function selectMethod(id) { selectedMethod = id; renderMethods(); }
+  renderMethods();
+
+  let retried = false;
+  function pay() {
+    const btn = document.getElementById("pay-btn");
+    const banner = document.getElementById("fail-banner");
+    banner.classList.add("hidden");
+    btn.disabled = true;
+    document.getElementById("pay-label").innerHTML = `<span class="spinner w-4 h-4"></span> Processing payment…`;
+
+    // simulate failure on first attempt sometimes, succeed on retry
+    const willFail = !retried && Math.random() < 0.25;
+
+    UI.simulateApi({ success: !willFail, delay: 1800 }).then(() => {
+      // save booking as upcoming
+      const bookings = Store.getBookings();
+      bookings.unshift({
+        id: bookingId,
+        service: MOCK.services.find(s => s.id === draft.serviceId)?.name || "Home Care Service",
+        patient: Store.getPatients().find(p => p.id === draft.patientId)?.name || "—",
+        amount, date: draft.date || new Date().toISOString().slice(0, 10),
+        time: draft.time || "10:00 AM",
+        duration: draft.duration || "8h",
+        status: "upcoming",
+        caregiver: MOCK.caregivers.find(c => c.id === caregiverId)?.name || MOCK.caregivers[0].name,
+        address: Store.getUser().address
+      });
+      Store.setBookings(bookings);
+      Store.clearDraftBooking();
+      UI.toast("Payment successful", "success");
+      setTimeout(() => (window.location.href = "booking-confirmation.html?stage=confirmed"), 500);
+    }).catch(() => {
+      btn.disabled = false;
+      document.getElementById("pay-label").textContent = "Retry Payment";
+      banner.classList.remove("hidden");
+      UI.icons();
+      retried = true;
+      UI.toast("Payment failed", "error");
+    });
+  }
+
+  UI.icons();
+</script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Bookings — CareConnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="css/design-system.css" />
+<link rel="stylesheet" href="css/animations.css" />
+</head>
+<body class="bg-[var(--canvas)]">
+
+<div class="app-frame">
+  <header class="app-topbar px-5 pb-3 flex items-center gap-3">
+    <a href="home.html" class="nav-btn"><i data-lucide="arrow-left" class="w-[18px] h-[18px]"></i></a>
+    <h1 class="font-extrabold text-[17px] text-[var(--ink-900)] tracking-tight">Bookings</h1>
+  </header>
+
+  <div class="flex gap-2 overflow-x-auto no-scrollbar px-5 py-3" id="tabs"></div>
+
+  <main class="scroll-content px-5">
+    <div id="bookings-list" class="space-y-3"></div>
+    <div id="empty-state" class="hidden card p-9 text-center anim-fade-up">
+      <i data-lucide="calendar-x" class="w-11 h-11 text-[var(--ink-300)] mx-auto mb-3"></i>
+      <p class="font-extrabold text-[var(--ink-800)] text-[15px]" id="empty-title">No bookings found</p>
+      <p class="text-[13px] text-[var(--ink-500)] mt-1.5 font-medium">Your bookings in this category will appear here.</p>
+      <a href="booking.html" class="btn btn-primary mt-5 !px-6 !min-h-[46px] inline-flex">Book a Service</a>
+    </div>
+  </main>
+</div>
+
+<nav id="floating-nav"></nav>
+<a href="booking.html" class="fab press"><i data-lucide="plus" class="w-6 h-6 text-white" stroke-width="2.5"></i></a>
+
+<script src="js/mockData.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script>
+  UI.requireAuth();
+  UI.initShell("bookings");
+
+  const tabDefs = [
+    { key: "all", label: "All" }, { key: "upcoming", label: "Upcoming" },
+    { key: "completed", label: "Completed" }, { key: "cancelled", label: "Cancelled" }, { key: "rejected", label: "Rejected" }
+  ];
+  let activeTab = "all";
+  const iconMap = { "Patient Attender": "user-round", "Baby Sitter": "baby", "Elder Care": "heart-handshake", "Mother Care": "flower", "Post Surgery Care": "bandage", "Nursing Assistant": "stethoscope" };
+
+  function renderTabs() {
+    document.getElementById("tabs").innerHTML = tabDefs.map(t => `
+      <button onclick="setTab('${t.key}')" class="shrink-0 px-4 py-2.5 rounded-2xl text-[13px] font-bold press ${activeTab === t.key ? "hero-gradient text-white" : "bg-[var(--surface)] text-[var(--ink-600)] border border-[var(--ink-100)]"}">${t.label}</button>
+    `).join("");
+  }
+  function setTab(key) { activeTab = key; renderTabs(); renderList(); }
+
+  function renderList() {
+    let bookings = Store.getBookings();
+    if (activeTab !== "all") bookings = bookings.filter(b => b.status === activeTab);
+    const listEl = document.getElementById("bookings-list");
+    const emptyEl = document.getElementById("empty-state");
+
+    if (bookings.length === 0) {
+      listEl.innerHTML = "";
+      emptyEl.classList.remove("hidden");
+      document.getElementById("empty-title").textContent = activeTab === "all" ? "No bookings yet" : `No ${activeTab} bookings`;
+    } else {
+      emptyEl.classList.add("hidden");
+      listEl.innerHTML = bookings.map((b, i) => `
+        <a href="booking-details.html?id=${b.id}" class="card p-4 block lift press anim-fade-up stagger-${(i%6)+1}">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-12 h-12 rounded-2xl bg-[var(--blue-50)] flex items-center justify-center shrink-0">
+                <i data-lucide="${iconMap[b.service] || "stethoscope"}" class="w-5 h-5 text-[var(--blue-600)]"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="font-extrabold text-[var(--ink-900)] text-[14.5px] truncate tracking-tight">${b.service}</p>
+                <p class="text-[11.5px] text-[var(--ink-400)] mt-0.5 font-semibold">${b.id}</p>
+              </div>
+            </div>
+            ${UI.statusBadge(b.status)}
+          </div>
+          <div class="divider my-3.5"></div>
+          <div class="grid grid-cols-3 gap-2 text-[12px]">
+            <div><p class="text-[var(--ink-400)] font-semibold">Patient</p><p class="font-bold text-[var(--ink-700)] mt-0.5 truncate">${b.patient}</p></div>
+            <div><p class="text-[var(--ink-400)] font-semibold">Date</p><p class="font-bold text-[var(--ink-700)] mt-0.5">${UI.formatDateShort(b.date)}</p></div>
+            <div><p class="text-[var(--ink-400)] font-semibold">Amount</p><p class="font-bold text-[var(--ink-700)] mt-0.5">${UI.formatCurrency(b.amount)}</p></div>
+          </div>
+        </a>`).join("");
+    }
+    UI.icons();
+  }
+
+  renderTabs(); renderList();
+</script>
+</body>
+</html>

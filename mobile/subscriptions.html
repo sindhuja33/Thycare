@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Subscription — CareConnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="css/design-system.css" />
+<link rel="stylesheet" href="css/animations.css" />
+</head>
+<body class="bg-[var(--canvas)]">
+
+<div class="app-frame">
+  <header class="app-topbar px-5 pb-4 flex items-center gap-3">
+    <a href="home.html" class="nav-btn"><i data-lucide="arrow-left" class="w-[18px] h-[18px]"></i></a>
+    <h1 class="font-extrabold text-[17px] text-[var(--ink-900)] tracking-tight">Subscription</h1>
+  </header>
+
+  <main class="scroll-content px-5 pt-2">
+
+    <div class="card p-4 flex items-center justify-between bg-gradient-to-br from-[var(--blue-50)] to-[var(--green-50)] !border-blue-100 mb-6 anim-fade-up">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-sm">
+          <i data-lucide="gem" class="w-5 h-5 text-[var(--blue-600)]"></i>
+        </div>
+        <div>
+          <p class="text-[11.5px] text-[var(--ink-500)] font-semibold">Current Plan</p>
+          <p class="font-extrabold text-[var(--ink-900)] text-[15px]" id="current-plan-label">Premium</p>
+        </div>
+      </div>
+      <span class="badge badge-green">Active</span>
+    </div>
+
+    <div id="plans-list" class="space-y-4"></div>
+
+    <div class="mt-8 mb-4 anim-fade-up">
+      <h2 class="font-extrabold text-[var(--ink-900)] text-[16px] tracking-tight mb-3">Compare Plans</h2>
+      <div class="card overflow-x-auto">
+        <table class="w-full text-[12.5px] min-w-[420px]">
+          <thead>
+            <tr class="border-b border-[var(--ink-100)]">
+              <th class="text-left p-3.5 text-[var(--ink-500)] font-bold text-[10.5px] uppercase tracking-wide">Feature</th>
+              <th class="p-3.5 text-[var(--ink-700)] font-extrabold text-center">Basic</th>
+              <th class="p-3.5 text-[var(--blue-600)] font-extrabold text-center">Premium</th>
+              <th class="p-3.5 text-[var(--green-600)] font-extrabold text-center">Premium+</th>
+            </tr>
+          </thead>
+          <tbody id="compare-body" class="divide-y divide-[var(--ink-100)]"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<nav id="floating-nav"></nav>
+
+<!-- Upgrade Sheet -->
+<div id="upgrade-sheet-backdrop" class="sheet-backdrop" onclick="UI.closeSheet('upgrade-sheet')"></div>
+<div id="upgrade-sheet" class="sheet px-6" onclick="event.stopPropagation()">
+  <div class="sheet-handle"></div>
+  <div class="w-12 h-12 rounded-2xl hero-gradient flex items-center justify-center mb-4 mt-2">
+    <i data-lucide="gem" class="w-6 h-6 text-white"></i>
+  </div>
+  <h3 class="font-extrabold text-[19px] text-[var(--ink-900)] tracking-tight" id="modal-title">Upgrade to Premium</h3>
+  <p class="text-[13.5px] text-[var(--ink-500)] mt-1.5 font-medium" id="modal-desc">You're switching your plan. This applies immediately.</p>
+  <div class="flex gap-3 mt-6">
+    <button onclick="UI.closeSheet('upgrade-sheet')" class="btn btn-secondary flex-1">Cancel</button>
+    <button onclick="confirmUpgrade()" id="modal-confirm-btn" class="btn btn-primary flex-1">Confirm</button>
+  </div>
+</div>
+
+<script src="js/mockData.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script>
+  UI.requireAuth();
+  UI.initShell("subscriptions");
+
+  let selectedPlanId = null;
+  const colorMap = {
+    slate: { ring: "!border-[var(--ink-300)]", btn: "btn-secondary" },
+    blue:  { ring: "!border-[var(--blue-500)]", btn: "btn-primary" },
+    green: { ring: "!border-[var(--green-500)]", btn: "btn-primary" }
+  };
+
+  function renderPlans() {
+    const currentPlanId = Store.getPlan();
+    document.getElementById("current-plan-label").textContent = MOCK.plans.find(p => p.id === currentPlanId)?.name || "Basic";
+
+    document.getElementById("plans-list").innerHTML = MOCK.plans.map((plan, i) => {
+      const c = colorMap[plan.color];
+      const isCurrent = plan.id === currentPlanId;
+      return `
+      <div class="card p-5 relative anim-fade-up stagger-${i+1} ${isCurrent ? c.ring + " !border-2" : ""}">
+        ${plan.popular ? `<span class="absolute -top-2.5 left-5 badge badge-blue">Most Popular</span>` : ""}
+        ${isCurrent ? `<span class="absolute -top-2.5 right-5 badge badge-green">Current</span>` : ""}
+        <p class="font-extrabold text-[17px] text-[var(--ink-900)] tracking-tight mt-1.5">${plan.name}</p>
+        <div class="flex items-baseline gap-1 mt-2">
+          <span class="text-[30px] font-extrabold text-[var(--ink-900)] tracking-tight">${plan.price === 0 ? "Free" : UI.formatCurrency(plan.price)}</span>
+          ${plan.price > 0 ? `<span class="text-[13px] text-[var(--ink-400)] font-semibold">/${plan.period}</span>` : ""}
+        </div>
+        <ul class="mt-4 space-y-2.5">
+          ${plan.benefits.map(b => `
+            <li class="flex items-start gap-2.5 text-[13.5px] text-[var(--ink-600)] font-medium">
+              <i data-lucide="check-circle-2" class="w-4 h-4 text-[var(--green-600)] mt-0.5 shrink-0"></i>${b}
+            </li>`).join("")}
+        </ul>
+        <button onclick="openUpgrade('${plan.id}')" ${isCurrent ? "disabled" : ""} class="btn ${isCurrent ? "btn-secondary opacity-60" : c.btn} w-full mt-5">
+          ${isCurrent ? "Current Plan" : plan.price === 0 ? "Switch to Basic" : "Upgrade Now"}
+        </button>
+      </div>`;
+    }).join("");
+    UI.icons();
+  }
+
+  function renderCompare() {
+    const rows = [
+      { label: "Bookings", vals: ["2/mo", "Unlimited", "Unlimited"] },
+      { label: "Discount", vals: ["—", "10%", "20%"] },
+      { label: "Priority Booking", vals: [false, true, true] },
+      { label: "Emergency Support", vals: [false, false, true] },
+      { label: "Support", vals: ["Email", "Chat", "Manager"] }
+    ];
+    document.getElementById("compare-body").innerHTML = rows.map(r => `
+      <tr>
+        <td class="p-3.5 text-[var(--ink-600)] font-semibold">${r.label}</td>
+        ${r.vals.map(v => `<td class="p-3.5 text-center">${
+          typeof v === "boolean"
+            ? (v ? `<i data-lucide="check" class="w-4 h-4 text-[var(--green-600)] inline"></i>` : `<i data-lucide="minus" class="w-4 h-4 text-[var(--ink-300)] inline"></i>`)
+            : `<span class="text-[var(--ink-700)] font-semibold">${v}</span>`
+        }</td>`).join("")}
+      </tr>`).join("");
+    UI.icons();
+  }
+
+  function openUpgrade(planId) {
+    selectedPlanId = planId;
+    const plan = MOCK.plans.find(p => p.id === planId);
+    document.getElementById("modal-title").textContent = plan.price === 0 ? "Switch to Basic" : `Upgrade to ${plan.name}`;
+    document.getElementById("modal-desc").textContent = plan.price === 0
+      ? "You'll lose Premium benefits like discounts and priority booking."
+      : `You're switching to ${plan.name} for ${UI.formatCurrency(plan.price)}/${plan.period}. This applies immediately.`;
+    UI.openSheet("upgrade-sheet");
+  }
+
+  function confirmUpgrade() {
+    const btn = document.getElementById("modal-confirm-btn");
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner w-4 h-4"></span> Processing…`;
+    UI.simulateApi({ success: true, delay: 900 }).then(() => {
+      Store.setPlan(selectedPlanId);
+      UI.closeSheet("upgrade-sheet");
+      btn.disabled = false; btn.textContent = "Confirm";
+      UI.toast("Plan updated successfully", "success");
+      renderPlans();
+    });
+  }
+
+  renderPlans();
+  renderCompare();
+</script>
+</body>
+</html>

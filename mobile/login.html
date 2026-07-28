@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Login — CareConnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="css/design-system.css" />
+<link rel="stylesheet" href="css/animations.css" />
+</head>
+<body class="bg-[var(--canvas)]">
+
+<div class="app-frame flex flex-col">
+  <!-- Hero -->
+  <div class="hero-gradient relative overflow-hidden pt-[calc(var(--safe-top)+28px)] pb-14 px-6">
+    <div class="mesh-blob w-56 h-56 bg-white/15 -top-10 -right-16"></div>
+    <div class="mesh-blob w-64 h-64 bg-emerald-300/20 bottom-0 -left-16"></div>
+    <div class="relative z-10 anim-fade-up">
+      <div class="w-14 h-14 rounded-2xl bg-white/95 flex items-center justify-center shadow-xl mb-5">
+        <i data-lucide="heart-pulse" class="w-7 h-7 text-blue-600" stroke-width="2.2"></i>
+      </div>
+      <h1 class="text-white font-extrabold text-[26px] leading-tight tracking-tight">Welcome to<br/>CareConnect</h1>
+      <p class="text-white/80 text-[14px] mt-2.5 font-medium">Verified caregivers, right at your doorstep</p>
+    </div>
+  </div>
+
+  <!-- Sheet-style form -->
+  <div class="flex-1 bg-[var(--canvas)] rounded-t-[28px] -mt-6 relative z-10 px-6 pt-8 anim-fade-up stagger-2">
+    <h2 class="text-[21px] font-extrabold text-[var(--ink-900)] tracking-tight">Login to continue</h2>
+    <p class="text-[var(--ink-500)] text-[13.5px] mt-1 font-medium">Enter your mobile number to receive an OTP</p>
+
+    <div class="mt-7">
+      <label class="text-[13px] font-bold text-[var(--ink-700)] mb-2 block">Mobile Number</label>
+      <div class="flex gap-2.5">
+        <div class="field flex items-center gap-1.5 !w-auto px-4 font-bold text-[var(--ink-800)]">
+          <span class="text-lg leading-none">🇮🇳</span> +91
+        </div>
+        <input id="phone-input" type="tel" maxlength="10" inputmode="numeric" placeholder="98765 43210" class="field flex-1" />
+      </div>
+      <p id="phone-error" class="text-[12.5px] text-[var(--red-500)] mt-2 hidden items-center gap-1 font-semibold">
+        <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> Enter a valid 10-digit mobile number
+      </p>
+
+      <div id="network-banner" class="hidden items-center gap-2.5 bg-[var(--red-50)] text-[var(--red-600)] text-[13px] font-semibold px-4 py-3 rounded-2xl mt-4">
+        <i data-lucide="wifi-off" class="w-4 h-4 shrink-0"></i> No internet connection. Check your network.
+      </div>
+
+      <button id="send-otp-btn" onclick="sendOtp()" class="btn btn-primary w-full mt-6 press">
+        <span id="send-otp-label">Send OTP</span>
+      </button>
+
+      <p class="text-center text-[11.5px] text-[var(--ink-400)] leading-relaxed px-2 mt-5">
+        By continuing, you agree to CareConnect's <span class="text-[var(--blue-600)] font-semibold">Terms</span> & <span class="text-[var(--blue-600)] font-semibold">Privacy Policy</span>
+      </p>
+    </div>
+
+    <div class="flex items-center justify-center gap-2 text-[var(--ink-500)] text-[12.5px] font-semibold mt-8">
+      <i data-lucide="shield-check" class="w-4 h-4 text-[var(--green-600)]"></i> Your data is encrypted & secure
+    </div>
+
+    <p class="text-center text-[13.5px] text-[var(--ink-500)] font-medium mt-6 mb-6">
+      New to CareConnect?
+      <a href="register.html" class="text-[var(--blue-600)] font-bold">Create an account</a>
+    </p>
+  </div>
+</div>
+
+<script src="js/mockData.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script>
+  UI.redirectIfAuthed();
+  const phoneInput = document.getElementById("phone-input");
+  phoneInput.addEventListener("input", () => {
+    phoneInput.value = phoneInput.value.replace(/\D/g, "").slice(0, 10);
+    document.getElementById("phone-error").classList.add("hidden");
+    phoneInput.classList.remove("field-error");
+  });
+
+  function sendOtp() {
+    const phone = phoneInput.value.trim();
+    const errorEl = document.getElementById("phone-error");
+    const banner = document.getElementById("network-banner");
+    banner.classList.add("hidden"); banner.classList.remove("flex");
+
+    if (phone.length !== 10) {
+      errorEl.classList.remove("hidden"); errorEl.classList.add("flex");
+      phoneInput.classList.add("field-error");
+      return;
+    }
+    errorEl.classList.add("hidden");
+    phoneInput.classList.remove("field-error");
+
+    const willFail = Math.random() < 0.1;
+    const btn = document.getElementById("send-otp-btn");
+    const label = document.getElementById("send-otp-label");
+    btn.disabled = true;
+    label.innerHTML = `<span class="spinner w-4 h-4"></span> Sending OTP…`;
+
+    UI.simulateApi({ success: !willFail, delay: 1200 }).then(() => {
+      sessionStorage.setItem("cc_pending_phone", phone);
+      UI.toast("OTP sent successfully", "success");
+      setTimeout(() => (window.location.href = "otp.html"), 450);
+    }).catch(() => {
+      btn.disabled = false;
+      label.textContent = "Send OTP";
+      banner.classList.remove("hidden"); banner.classList.add("flex");
+      UI.toast("Failed to send OTP", "error");
+    });
+  }
+  phoneInput.addEventListener("keydown", (e) => { if (e.key === "Enter") sendOtp(); });
+</script>
+</body>
+</html>

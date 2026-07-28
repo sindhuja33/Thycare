@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Booking Details — CareConnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="css/design-system.css" />
+<link rel="stylesheet" href="css/animations.css" />
+</head>
+<body class="bg-[var(--canvas)]">
+
+<div class="app-frame">
+  <header class="app-topbar px-5 pb-4 flex items-center gap-3">
+    <a href="bookings.html" class="nav-btn"><i data-lucide="arrow-left" class="w-[18px] h-[18px]"></i></a>
+    <h1 class="font-extrabold text-[17px] text-[var(--ink-900)] tracking-tight">Booking Details</h1>
+  </header>
+  <main id="content" class="px-5 pt-2 pb-10"></main>
+</div>
+
+<!-- Cancel Sheet -->
+<div id="cancel-sheet-backdrop" class="sheet-backdrop" onclick="UI.closeSheet('cancel-sheet')"></div>
+<div id="cancel-sheet" class="sheet px-6 text-center" onclick="event.stopPropagation()">
+  <div class="sheet-handle"></div>
+  <div class="w-14 h-14 rounded-2xl bg-[var(--red-50)] flex items-center justify-center mb-4 mx-auto mt-3">
+    <i data-lucide="calendar-x" class="w-7 h-7 text-[var(--red-500)]"></i>
+  </div>
+  <h3 class="font-extrabold text-[19px] text-[var(--ink-900)] tracking-tight">Cancel Booking?</h3>
+  <p class="text-[13.5px] text-[var(--ink-500)] mt-1.5 font-medium">Cancellation charges may apply if the visit is within 24 hours.</p>
+  <div class="flex gap-3 mt-6 mb-2">
+    <button onclick="UI.closeSheet('cancel-sheet')" class="btn btn-secondary flex-1">Keep Booking</button>
+    <button onclick="confirmCancel()" class="btn btn-danger flex-1">Cancel It</button>
+  </div>
+</div>
+
+<!-- Rating Sheet -->
+<div id="rating-sheet-backdrop" class="sheet-backdrop" onclick="UI.closeSheet('rating-sheet')"></div>
+<div id="rating-sheet" class="sheet px-6 text-center" onclick="event.stopPropagation()">
+  <div class="sheet-handle"></div>
+  <h3 class="font-extrabold text-[19px] text-[var(--ink-900)] tracking-tight mt-3">Rate Your Experience</h3>
+  <p class="text-[13.5px] text-[var(--ink-500)] mt-1.5 font-medium">How was the service?</p>
+  <div class="flex justify-center gap-2 mt-5" id="star-picker"></div>
+  <textarea id="review-text" rows="3" class="field resize-none mt-4" placeholder="Share your feedback (optional)"></textarea>
+  <button onclick="submitRating()" class="btn btn-primary w-full mt-4 mb-2">Submit Rating</button>
+</div>
+
+<script src="js/mockData.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script>
+  UI.requireAuth();
+  const params = new URLSearchParams(location.search);
+  const id = params.get("id");
+  let bookings = Store.getBookings();
+  const booking = bookings.find(b => b.id === id);
+  const content = document.getElementById("content");
+  const iconMap = { "Patient Attender": "user-round", "Baby Sitter": "baby", "Elder Care": "heart-handshake", "Mother Care": "flower", "Post Surgery Care": "bandage", "Nursing Assistant": "stethoscope" };
+
+  function render() {
+    if (!booking) {
+      content.innerHTML = `<div class="card p-9 text-center anim-fade-up"><i data-lucide="file-x" class="w-11 h-11 text-[var(--ink-300)] mx-auto mb-3"></i><p class="font-extrabold text-[var(--ink-800)] text-[15px]">Booking not found</p><a href="bookings.html" class="btn btn-primary mt-5 !px-6 !min-h-[46px] inline-flex">Back to Bookings</a></div>`;
+      UI.icons(); return;
+    }
+    const caregiver = MOCK.caregivers.find(c => c.name === booking.caregiver) || MOCK.caregivers[0];
+
+    content.innerHTML = `
+      <div class="card p-5 anim-fade-up">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-[var(--blue-50)] flex items-center justify-center"><i data-lucide="${iconMap[booking.service] || "stethoscope"}" class="w-6 h-6 text-[var(--blue-600)]"></i></div>
+            <div><p class="font-extrabold text-[var(--ink-900)] tracking-tight">${booking.service}</p><p class="text-[11.5px] text-[var(--ink-400)] font-semibold">${booking.id}</p></div>
+          </div>
+          ${UI.statusBadge(booking.status)}
+        </div>
+
+        ${booking.status === "rejected" && booking.reason ? `<div class="mt-4 flex items-start gap-2 bg-[var(--red-50)] text-[var(--red-600)] text-[12px] font-semibold px-3.5 py-3 rounded-2xl"><i data-lucide="alert-triangle" class="w-4 h-4 mt-0.5 shrink-0"></i><span>${booking.reason}</span></div>` : ""}
+
+        <div class="divider my-4"></div>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between text-[13px] font-medium"><span class="text-[var(--ink-500)] flex items-center gap-1.5"><i data-lucide="user" class="w-4 h-4"></i>Patient</span><span class="font-bold text-[var(--ink-800)]">${booking.patient}</span></div>
+          <div class="flex items-center justify-between text-[13px] font-medium"><span class="text-[var(--ink-500)] flex items-center gap-1.5"><i data-lucide="calendar" class="w-4 h-4"></i>Date & Time</span><span class="font-bold text-[var(--ink-800)]">${UI.formatDate(booking.date)}, ${booking.time}</span></div>
+          <div class="flex items-center justify-between text-[13px] font-medium"><span class="text-[var(--ink-500)] flex items-center gap-1.5"><i data-lucide="timer" class="w-4 h-4"></i>Duration</span><span class="font-bold text-[var(--ink-800)]">${booking.duration}</span></div>
+          <div class="flex items-center justify-between text-[13px] font-medium"><span class="text-[var(--ink-500)] flex items-center gap-1.5"><i data-lucide="map-pin" class="w-4 h-4"></i>Address</span><span class="font-bold text-[var(--ink-800)] text-right max-w-[60%]">${booking.address}</span></div>
+          <div class="flex items-center justify-between text-[13px] font-medium"><span class="text-[var(--ink-500)] flex items-center gap-1.5"><i data-lucide="indian-rupee" class="w-4 h-4"></i>Amount Paid</span><span class="font-extrabold text-[var(--blue-600)]">${UI.formatCurrency(booking.amount)}</span></div>
+        </div>
+      </div>
+
+      ${booking.caregiver ? `
+      <div class="card p-4 mt-4 anim-fade-up stagger-1">
+        <p class="text-[11px] font-bold text-[var(--ink-500)] uppercase tracking-wide mb-3">Caregiver</p>
+        <div class="flex items-center gap-3.5">
+          <img src="${caregiver.photo}" class="w-14 h-14 rounded-2xl object-cover" />
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-1.5"><p class="font-extrabold text-[var(--ink-900)] text-[14px] tracking-tight">${caregiver.name}</p><i data-lucide="badge-check" class="w-3.5 h-3.5 text-[var(--blue-600)]"></i></div>
+            <p class="text-[11.5px] text-[var(--ink-500)] mt-0.5 font-medium">${caregiver.experience} • ${caregiver.completedServices} services</p>
+            <div class="flex items-center gap-1 mt-1"><i data-lucide="star" class="w-3.5 h-3.5 fill-amber-500 text-amber-500"></i><span class="text-[11.5px] font-bold text-[var(--ink-700)]">${caregiver.rating}</span></div>
+          </div>
+          ${booking.status === "upcoming" ? `<button onclick="UI.toast('Calling ${caregiver.name}…','info')" class="w-11 h-11 rounded-full bg-[var(--green-50)] flex items-center justify-center shrink-0"><i data-lucide="phone" class="w-4 h-4 text-[var(--green-600)]"></i></button>` : ""}
+        </div>
+      </div>` : ""}
+
+      <div class="mt-5 space-y-2.5 anim-fade-up stagger-2">
+        ${booking.status === "upcoming" ? `<button onclick="UI.openSheet('cancel-sheet')" class="btn w-full !border-2 !border-[var(--red-50)] bg-transparent text-[var(--red-500)]">Cancel Booking</button>` : ""}
+        ${booking.status === "completed" && !booking.rating ? `<button onclick="openRatingSheet()" class="btn btn-primary w-full">Rate This Service</button>` : ""}
+        ${booking.status === "completed" && booking.rating ? `<div class="card p-4 flex items-center gap-2"><div class="flex gap-0.5">${Array.from({length:5},(_,i)=>`<i data-lucide="star" class="w-4 h-4 ${i<booking.rating?"fill-amber-500 text-amber-500":"text-[var(--ink-200,var(--ink-300))]"}"></i>`).join("")}</div><span class="text-[12.5px] text-[var(--ink-500)] font-medium">You rated this service</span></div>` : ""}
+        ${(booking.status === "cancelled" || booking.status === "rejected") ? `<a href="booking.html" class="btn btn-primary w-full block text-center">Book Again</a>` : ""}
+      </div>
+    `;
+    UI.icons();
+  }
+
+  function confirmCancel() {
+    bookings = bookings.map(b => b.id === id ? { ...b, status: "cancelled" } : b);
+    Store.setBookings(bookings);
+    UI.closeSheet("cancel-sheet");
+    UI.toast("Booking cancelled", "success");
+    setTimeout(() => location.reload(), 500);
+  }
+
+  let selectedStars = 0;
+  function openRatingSheet() { renderStars(); UI.openSheet("rating-sheet"); }
+  function renderStars() {
+    document.getElementById("star-picker").innerHTML = Array.from({length:5},(_,i)=>`
+      <button onclick="selectStar(${i+1})"><i data-lucide="star" class="w-9 h-9 ${i<selectedStars?"fill-amber-500 text-amber-500":"text-[var(--ink-200,var(--ink-300))]"}"></i></button>
+    `).join("");
+    UI.icons();
+  }
+  function selectStar(n) { selectedStars = n; renderStars(); }
+  function submitRating() {
+    if (selectedStars === 0) { UI.toast("Please select a rating", "error"); return; }
+    bookings = bookings.map(b => b.id === id ? { ...b, rating: selectedStars } : b);
+    Store.setBookings(bookings);
+    UI.closeSheet("rating-sheet");
+    UI.toast("Thanks for your feedback!", "success");
+    setTimeout(() => location.reload(), 500);
+  }
+
+  render();
+</script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Settings — CareConnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/components.css" />
+<link rel="stylesheet" href="css/animations.css" />
+<link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body class="min-h-screen bg-slate-50">
+
+<div class="flex">
+  <aside id="sidebar"></aside>
+
+  <div class="desktop-main">
+    <header class="hidden lg:flex items-center px-8 py-5 glass border-b border-slate-100 sticky top-0 z-30">
+      <h1 class="text-xl font-extrabold text-slate-900">Settings</h1>
+    </header>
+
+    <main class="page-container content-scroll max-w-2xl">
+      <header class="lg:hidden sticky top-0 z-30 glass px-4 py-4 border-b border-slate-100 flex items-center gap-3">
+        <a href="profile.html" class="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center">
+          <i data-lucide="arrow-left" class="w-4 h-4 text-slate-600"></i>
+        </a>
+        <h1 class="font-bold text-slate-900">Settings</h1>
+      </header>
+
+      <div class="px-4 lg:px-8 py-6 space-y-5">
+
+        <div class="card p-1.5 animate-fade-in-up">
+          <div class="flex items-center justify-between p-3.5">
+            <span class="flex items-center gap-3 text-sm font-medium text-slate-700"><i data-lucide="moon" class="w-4 h-4 text-slate-500"></i>Dark Mode</span>
+            <div id="dark-toggle" class="toggle" onclick="onToggleDark()"><div class="toggle-dot"></div></div>
+          </div>
+          <div class="divider mx-3.5"></div>
+          <div class="flex items-center justify-between p-3.5">
+            <span class="flex items-center gap-3 text-sm font-medium text-slate-700"><i data-lucide="bell" class="w-4 h-4 text-slate-500"></i>Push Notifications</span>
+            <div id="notif-toggle" class="toggle on" onclick="toggleSwitch('notif-toggle')"><div class="toggle-dot"></div></div>
+          </div>
+          <div class="divider mx-3.5"></div>
+          <div class="flex items-center justify-between p-3.5">
+            <span class="flex items-center gap-3 text-sm font-medium text-slate-700"><i data-lucide="mail" class="w-4 h-4 text-slate-500"></i>Email Alerts</span>
+            <div id="email-toggle" class="toggle on" onclick="toggleSwitch('email-toggle')"><div class="toggle-dot"></div></div>
+          </div>
+        </div>
+
+        <div class="card p-1.5 animate-fade-in-up stagger-1">
+          <button onclick="openLanguageModal()" class="w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-50">
+            <span class="flex items-center gap-3 text-sm font-medium text-slate-700"><i data-lucide="languages" class="w-4 h-4 text-slate-500"></i>Language</span>
+            <span class="flex items-center gap-1.5 text-sm text-slate-400"><span id="lang-label">English</span><i data-lucide="chevron-right" class="w-4 h-4"></i></span>
+          </button>
+        </div>
+
+        <div class="card p-1.5 animate-fade-in-up stagger-2">
+          <a href="#" onclick="UI.toast('Privacy Policy opened','info');return false;" class="w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-50">
+            <span class="flex items-center gap-3 text-sm font-medium text-slate-700"><i data-lucide="shield" class="w-4 h-4 text-slate-500"></i>Privacy Policy</span>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+          </a>
+          <div class="divider mx-3.5"></div>
+          <a href="#" onclick="UI.toast('Terms of Service opened','info');return false;" class="w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-50">
+            <span class="flex items-center gap-3 text-sm font-medium text-slate-700"><i data-lucide="file-text" class="w-4 h-4 text-slate-500"></i>Terms of Service</span>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+          </a>
+          <div class="divider mx-3.5"></div>
+          <a href="faq.html" class="w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-50">
+            <span class="flex items-center gap-3 text-sm font-medium text-slate-700"><i data-lucide="help-circle" class="w-4 h-4 text-slate-500"></i>FAQ</span>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+          </a>
+        </div>
+
+        <button onclick="UI.logout()" class="w-full flex items-center justify-center gap-2 p-3.5 rounded-xl text-red-500 font-semibold text-sm border-2 border-red-100 press-scale">
+          <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+        </button>
+
+        <p class="text-center text-xs text-slate-400">CareConnect v1.0.0 (Prototype)</p>
+      </div>
+    </main>
+  </div>
+</div>
+
+<nav id="bottom-nav"></nav>
+
+<!-- Language modal -->
+<div id="lang-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center px-6">
+  <div class="card p-5 max-w-sm w-full animate-scale-in">
+    <h3 class="font-extrabold text-lg text-slate-900 mb-3">Select Language</h3>
+    <div id="lang-list" class="space-y-1"></div>
+  </div>
+</div>
+
+<script src="js/mockData.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script>
+  UI.requireAuth();
+  UI.initShell("settings");
+
+  const darkToggle = document.getElementById("dark-toggle");
+  darkToggle.classList.toggle("on", Store.getDarkMode());
+  function onToggleDark() {
+    const on = UI.toggleDarkMode();
+    darkToggle.classList.toggle("on", on);
+    UI.toast(on ? "Dark mode enabled" : "Dark mode disabled", "info");
+  }
+
+  function toggleSwitch(id) {
+    document.getElementById(id).classList.toggle("on");
+  }
+
+  const languages = ["English", "Tamil", "Hindi", "Telugu", "Malayalam"];
+  let currentLang = "English";
+  function openLanguageModal() {
+    document.getElementById("lang-list").innerHTML = languages.map(l => `
+      <button onclick="selectLanguage('${l}')" class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 text-left">
+        <span class="text-sm font-medium text-slate-700">${l}</span>
+        ${l === currentLang ? `<i data-lucide="check" class="w-4 h-4 text-blue-600"></i>` : ""}
+      </button>
+    `).join("");
+    UI.icons();
+    const m = document.getElementById("lang-modal");
+    m.classList.remove("hidden"); m.classList.add("flex");
+  }
+  function selectLanguage(l) {
+    currentLang = l;
+    document.getElementById("lang-label").textContent = l;
+    const m = document.getElementById("lang-modal");
+    m.classList.add("hidden"); m.classList.remove("flex");
+    UI.toast(`Language set to ${l}`, "success");
+  }
+  document.getElementById("lang-modal").addEventListener("click", (e) => {
+    if (e.target.id === "lang-modal") { e.target.classList.add("hidden"); e.target.classList.remove("flex"); }
+  });
+
+  UI.icons();
+</script>
+</body>
+</html>

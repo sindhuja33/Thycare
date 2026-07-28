@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Patient Details — CareConnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="css/design-system.css" />
+<link rel="stylesheet" href="css/animations.css" />
+</head>
+<body class="bg-[var(--canvas)]">
+
+<div class="app-frame">
+  <header class="app-topbar px-5 pb-4 flex items-center gap-3">
+    <a href="patients.html" class="nav-btn"><i data-lucide="arrow-left" class="w-[18px] h-[18px]"></i></a>
+    <h1 class="font-extrabold text-[17px] text-[var(--ink-900)] tracking-tight">Patient Details</h1>
+  </header>
+
+  <main id="content" class="scroll-content px-5 pt-2"></main>
+</div>
+
+<nav id="floating-nav"></nav>
+
+<script src="js/mockData.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script>
+  UI.requireAuth();
+  UI.initShell("patients");
+
+  const params = new URLSearchParams(location.search);
+  const patient = Store.getPatients().find(p => p.id === params.get("id"));
+  const content = document.getElementById("content");
+
+  if (!patient) {
+    content.innerHTML = `
+      <div class="card p-9 text-center anim-fade-up">
+        <i data-lucide="user-x" class="w-11 h-11 text-[var(--ink-300)] mx-auto mb-3"></i>
+        <p class="font-extrabold text-[var(--ink-800)] text-[15px]">Patient not found</p>
+        <a href="patients.html" class="btn btn-primary mt-5 !px-6 !min-h-[46px] inline-flex">Back to Patients</a>
+      </div>`;
+  } else {
+    const conditionBadge = c => c.toLowerCase() === "healthy" ? "badge-green" : "badge-blue";
+    const patientBookings = Store.getBookings().filter(b => b.patient === patient.name);
+
+    content.innerHTML = `
+      <div class="card p-5 anim-fade-up">
+        <div class="flex items-center gap-4">
+          <img src="${patient.photo}" class="w-20 h-20 rounded-[22px] object-cover" />
+          <div class="min-w-0">
+            <h2 class="font-extrabold text-[19px] text-[var(--ink-900)] tracking-tight truncate">${patient.name}</h2>
+            <p class="text-[13px] text-[var(--ink-500)] mt-0.5 font-medium">${patient.relationship} • ${patient.age} ${typeof patient.age === "number" ? "years" : ""} • ${patient.gender}</p>
+            <div class="flex flex-wrap gap-1.5 mt-2.5">
+              ${patient.conditions.map(c => `<span class="badge ${conditionBadge(c)}">${c}</span>`).join("")}
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-3 mt-5">
+          <a href="booking.html?patient=${patient.id}" class="btn btn-primary flex-1">Book Service</a>
+          <a href="patients.html" class="btn btn-secondary flex-1">Edit Profile</a>
+        </div>
+      </div>
+
+      <div class="card p-5 mt-5 anim-fade-up stagger-1">
+        <div class="flex items-center justify-between mb-3.5">
+          <h3 class="font-extrabold text-[var(--ink-900)] text-[14.5px] tracking-tight">Medical Reports</h3>
+          <button onclick="UI.toast('Report upload simulated','success')" class="text-[12.5px] text-[var(--blue-600)] font-bold flex items-center gap-1">
+            <i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload
+          </button>
+        </div>
+        ${patient.reports.length === 0 ? `
+          <div class="text-center py-7">
+            <i data-lucide="file-x" class="w-8 h-8 text-[var(--ink-300)] mx-auto mb-2"></i>
+            <p class="text-[13px] text-[var(--ink-500)] font-medium">No reports uploaded yet</p>
+          </div>` : patient.reports.map(r => `
+          <div class="flex items-center justify-between py-2.5 border-b border-[var(--ink-100)] last:border-0">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="w-9 h-9 rounded-xl bg-[var(--red-50)] flex items-center justify-center shrink-0">
+                <i data-lucide="file-text" class="w-4 h-4 text-[var(--red-500)]"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-[13px] font-semibold text-[var(--ink-700)] truncate">${r.name}</p>
+                <p class="text-[11px] text-[var(--ink-400)] font-medium">${r.size} • ${UI.formatDate(r.date)}</p>
+              </div>
+            </div>
+            <i data-lucide="download" class="w-4 h-4 text-[var(--ink-400)] shrink-0"></i>
+          </div>`).join("")}
+      </div>
+
+      <div class="card p-5 mt-5 mb-2 anim-fade-up stagger-2">
+        <h3 class="font-extrabold text-[var(--ink-900)] text-[14.5px] tracking-tight mb-3.5">Booking History</h3>
+        ${patientBookings.length === 0 ? `
+          <p class="text-[13px] text-[var(--ink-500)] font-medium text-center py-4">No bookings for this patient yet</p>
+        ` : patientBookings.map(b => `
+          <a href="booking-details.html?id=${b.id}" class="flex items-center justify-between py-2.5 border-b border-[var(--ink-100)] last:border-0">
+            <div>
+              <p class="text-[13px] font-semibold text-[var(--ink-700)]">${b.service}</p>
+              <p class="text-[11px] text-[var(--ink-400)] font-medium">${UI.formatDate(b.date)}</p>
+            </div>
+            ${UI.statusBadge(b.status)}
+          </a>`).join("")}
+      </div>
+    `;
+  }
+  UI.icons();
+</script>
+</body>
+</html>

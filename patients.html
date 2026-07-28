@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Patients — CareConnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/components.css" />
+<link rel="stylesheet" href="css/animations.css" />
+<link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body class="min-h-screen bg-slate-50">
+
+<div class="flex">
+  <aside id="sidebar"></aside>
+
+  <div class="desktop-main">
+    <header class="hidden lg:flex items-center justify-between px-8 py-5 glass border-b border-slate-100 sticky top-0 z-30">
+      <div>
+        <h1 class="text-xl font-extrabold text-slate-900">Patients</h1>
+        <p class="text-sm text-slate-500 mt-0.5">Manage patient profiles for home care bookings.</p>
+      </div>
+      <button onclick="openAddPatient()" id="desktop-add-btn" class="btn-primary px-5 py-2.5 text-sm flex items-center gap-2">
+        <i data-lucide="user-round-plus" class="w-4 h-4"></i> Add Patient
+      </button>
+    </header>
+
+    <main class="page-container content-scroll">
+      <header class="lg:hidden sticky top-0 z-30 glass px-4 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <a href="home.html" class="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center">
+            <i data-lucide="arrow-left" class="w-4 h-4 text-slate-600"></i>
+          </a>
+          <h1 class="font-bold text-slate-900">Patients</h1>
+        </div>
+        <span class="text-xs text-slate-400 font-medium" id="mobile-count">0 / 3</span>
+      </header>
+
+      <div class="px-4 lg:px-8 py-6">
+        <div id="patients-list" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
+
+        <div id="empty-state" class="hidden card p-10 text-center">
+          <i data-lucide="users-round" class="w-10 h-10 text-slate-300 mx-auto mb-3"></i>
+          <p class="font-semibold text-slate-700">No patients added yet</p>
+          <p class="text-sm text-slate-500 mt-1">Add a patient profile to start booking home care services.</p>
+          <button onclick="openAddPatient()" class="btn-primary px-5 py-2.5 text-sm mt-4">Add Patient</button>
+        </div>
+
+        <div id="limit-banner" class="hidden mt-4 flex items-center gap-2 bg-amber-50 text-amber-700 text-sm font-medium px-4 py-3 rounded-xl">
+          <i data-lucide="info" class="w-4 h-4 shrink-0"></i> You've reached the maximum of 3 patients.
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<nav id="bottom-nav"></nav>
+<button onclick="openAddPatient()" id="mobile-fab" class="fab brand-gradient mobile-only press-scale">
+  <i data-lucide="plus" class="w-6 h-6 text-white"></i>
+</button>
+
+<!-- Add/Edit Patient Modal -->
+<div id="patient-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center px-4">
+  <div class="card p-6 max-w-md w-full max-h-[90vh] overflow-y-auto animate-scale-in">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-extrabold text-lg text-slate-900" id="modal-heading">Add Patient</h3>
+      <button onclick="closePatientModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center">
+        <i data-lucide="x" class="w-4 h-4 text-slate-500"></i>
+      </button>
+    </div>
+    <div class="space-y-3.5">
+      <div>
+        <label class="text-sm font-semibold text-slate-700 mb-1.5 block">Full Name</label>
+        <input id="pf-name" class="input-field w-full" placeholder="e.g. Kamala Devi" />
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-sm font-semibold text-slate-700 mb-1.5 block">Relationship</label>
+          <select id="pf-relationship" class="input-field w-full">
+            <option>Mother</option><option>Father</option><option>Spouse</option>
+            <option>Son</option><option>Daughter</option><option>Self</option><option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-sm font-semibold text-slate-700 mb-1.5 block">Age</label>
+          <input id="pf-age" class="input-field w-full" placeholder="e.g. 65" />
+        </div>
+      </div>
+      <div>
+        <label class="text-sm font-semibold text-slate-700 mb-1.5 block">Gender</label>
+        <select id="pf-gender" class="input-field w-full">
+          <option>Female</option><option>Male</option><option>Other</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-sm font-semibold text-slate-700 mb-1.5 block">Medical Conditions</label>
+        <input id="pf-conditions" class="input-field w-full" placeholder="e.g. Diabetes, Hypertension" />
+        <p class="text-xs text-slate-400 mt-1">Separate multiple conditions with commas</p>
+      </div>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button onclick="closePatientModal()" class="btn-secondary flex-1 py-2.5">Cancel</button>
+      <button onclick="savePatient()" id="save-patient-btn" class="btn-primary flex-1 py-2.5">Save Patient</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete confirm -->
+<div id="delete-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center px-6">
+  <div class="card p-6 max-w-sm w-full animate-scale-in text-center">
+    <div class="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center mb-4 mx-auto">
+      <i data-lucide="trash-2" class="w-6 h-6 text-red-500"></i>
+    </div>
+    <h3 class="font-extrabold text-lg text-slate-900">Remove Patient?</h3>
+    <p class="text-sm text-slate-500 mt-1.5">This will permanently remove <span id="delete-name" class="font-semibold">this patient</span> and their reports.</p>
+    <div class="flex gap-3 mt-6">
+      <button onclick="closeDeleteModal()" class="btn-secondary flex-1 py-2.5">Cancel</button>
+      <button onclick="confirmDelete()" class="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-semibold press-scale">Remove</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/mockData.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script>
+  UI.requireAuth();
+  UI.initShell("patients");
+
+  const MAX_PATIENTS = 3;
+  let editingId = null;
+  let deletingId = null;
+
+  function conditionBadgeClass(c) {
+    return c.toLowerCase() === "healthy" ? "badge-green" : "badge-blue";
+  }
+
+  function render() {
+    const patients = Store.getPatients();
+    const listEl = document.getElementById("patients-list");
+    const emptyEl = document.getElementById("empty-state");
+    const limitBanner = document.getElementById("limit-banner");
+    const mobileFab = document.getElementById("mobile-fab");
+    const desktopAddBtn = document.getElementById("desktop-add-btn");
+
+    document.getElementById("mobile-count").textContent = `${patients.length} / ${MAX_PATIENTS}`;
+
+    if (patients.length === 0) {
+      listEl.innerHTML = "";
+      emptyEl.classList.remove("hidden");
+    } else {
+      emptyEl.classList.add("hidden");
+      listEl.innerHTML = patients.map(p => `
+        <div class="card p-4 hover-lift animate-fade-in-up">
+          <div class="flex items-start gap-3.5">
+            <img src="${p.photo}" class="w-16 h-16 rounded-2xl object-cover shrink-0" />
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between">
+                <p class="font-bold text-slate-900 truncate">${p.name}</p>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">${p.relationship} • ${p.age} ${typeof p.age === "number" ? "years" : ""}</p>
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                ${p.conditions.map(c => `<span class="badge ${conditionBadgeClass(c)}">${c}</span>`).join("")}
+              </div>
+            </div>
+          </div>
+          <div class="divider my-3.5"></div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5 text-xs text-slate-500">
+              <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+              ${p.reports.length} report${p.reports.length !== 1 ? "s" : ""}
+            </div>
+            <div class="flex items-center gap-2">
+              <a href="patient-details.html?id=${p.id}" class="btn-ghost text-blue-600 text-xs px-3 py-1.5">View</a>
+              <button onclick="openEditPatient('${p.id}')" class="btn-ghost text-slate-600 text-xs px-3 py-1.5">Edit</button>
+              <button onclick="openDeleteModal('${p.id}')" class="btn-ghost text-red-500 text-xs px-3 py-1.5">Delete</button>
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    const atLimit = patients.length >= MAX_PATIENTS;
+    limitBanner.classList.toggle("hidden", !atLimit);
+    mobileFab.classList.toggle("opacity-40", atLimit);
+    mobileFab.classList.toggle("pointer-events-none", atLimit);
+    desktopAddBtn.disabled = atLimit;
+    desktopAddBtn.classList.toggle("opacity-50", atLimit);
+    desktopAddBtn.classList.toggle("cursor-not-allowed", atLimit);
+
+    UI.icons();
+  }
+
+  function openAddPatient() {
+    const patients = Store.getPatients();
+    if (patients.length >= MAX_PATIENTS) {
+      UI.toast("Maximum of 3 patients allowed", "error");
+      return;
+    }
+    editingId = null;
+    document.getElementById("modal-heading").textContent = "Add Patient";
+    ["pf-name", "pf-age", "pf-conditions"].forEach(id => document.getElementById(id).value = "");
+    document.getElementById("pf-relationship").value = "Mother";
+    document.getElementById("pf-gender").value = "Female";
+    showModal("patient-modal");
+  }
+
+  function openEditPatient(id) {
+    const p = Store.getPatients().find(x => x.id === id);
+    if (!p) return;
+    editingId = id;
+    document.getElementById("modal-heading").textContent = "Edit Patient";
+    document.getElementById("pf-name").value = p.name;
+    document.getElementById("pf-relationship").value = p.relationship;
+    document.getElementById("pf-age").value = p.age;
+    document.getElementById("pf-gender").value = p.gender;
+    document.getElementById("pf-conditions").value = p.conditions.join(", ");
+    showModal("patient-modal");
+  }
+
+  function savePatient() {
+    const name = document.getElementById("pf-name").value.trim();
+    const age = document.getElementById("pf-age").value.trim();
+    if (!name || !age) {
+      UI.toast("Please fill in name and age", "error");
+      return;
+    }
+    const conditions = document.getElementById("pf-conditions").value
+      .split(",").map(c => c.trim()).filter(Boolean);
+
+    const btn = document.getElementById("save-patient-btn");
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner w-4 h-4"></span> Saving…`;
+
+    UI.simulateApi({ success: true, delay: 800 }).then(() => {
+      let patients = Store.getPatients();
+      const data = {
+        name,
+        relationship: document.getElementById("pf-relationship").value,
+        age: isNaN(age) ? age : Number(age),
+        gender: document.getElementById("pf-gender").value,
+        conditions: conditions.length ? conditions : ["Healthy"],
+        photo: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 60) + 1}`,
+        reports: []
+      };
+      if (editingId) {
+        patients = patients.map(p => p.id === editingId ? { ...p, ...data, photo: p.photo, reports: p.reports } : p);
+      } else {
+        patients.push({ id: "pat-" + Date.now(), ...data });
+      }
+      Store.setPatients(patients);
+      btn.disabled = false;
+      btn.textContent = "Save Patient";
+      closePatientModal();
+      UI.toast(editingId ? "Patient updated" : "Patient added successfully", "success");
+      render();
+    });
+  }
+
+  function openDeleteModal(id) {
+    deletingId = id;
+    const p = Store.getPatients().find(x => x.id === id);
+    document.getElementById("delete-name").textContent = p ? p.name : "this patient";
+    showModal("delete-modal");
+  }
+
+  function confirmDelete() {
+    Store.setPatients(Store.getPatients().filter(p => p.id !== deletingId));
+    closeDeleteModal();
+    UI.toast("Patient removed", "success");
+    render();
+  }
+
+  function showModal(id) {
+    const m = document.getElementById(id);
+    m.classList.remove("hidden");
+    m.classList.add("flex");
+    UI.icons();
+  }
+  function closePatientModal() { hideModal("patient-modal"); }
+  function closeDeleteModal() { hideModal("delete-modal"); }
+  function hideModal(id) {
+    const m = document.getElementById(id);
+    m.classList.add("hidden");
+    m.classList.remove("flex");
+  }
+
+  render();
+</script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+/* CareConnect — responsive layout rules */
+
+/* Mobile-first defaults: bottom nav + top header shown, desktop shell hidden */
+.desktop-shell { display: none; }
+.mobile-shell { display: block; }
+
+@media (min-width: 1024px) {
+  .mobile-shell { display: none; }
+  .desktop-shell { display: flex; }
+
+  .desktop-only { display: block; }
+  .mobile-only { display: none !important; }
+}
+
+@media (max-width: 1023px) {
+  .desktop-only { display: none !important; }
+  .mobile-only { display: block; }
+}
+
+/* Desktop app shell */
+.desktop-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.desktop-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.desktop-right-panel {
+  width: 320px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.page-container {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+  .page-container {
+    max-width: 100%;
+    margin: 0;
+  }
+}
+
+.content-scroll {
+  padding-bottom: 96px;
+}
+
+@media (min-width: 1024px) {
+  .content-scroll { padding-bottom: 32px; }
+}
+
+.grid-services {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 1024px) {
+  .grid-services {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .grid-services {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

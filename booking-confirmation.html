@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Booking Status — CareConnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/components.css" />
+<link rel="stylesheet" href="css/animations.css" />
+<link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body class="min-h-screen bg-slate-50">
+
+<div class="max-w-xl mx-auto min-h-screen flex flex-col items-center justify-center px-6 py-12 text-center">
+
+  <!-- Pending state -->
+  <div id="pending-view" class="hidden flex-col items-center animate-scale-in">
+    <div class="w-24 h-24 rounded-full bg-amber-50 flex items-center justify-center mb-6 relative">
+      <div class="absolute inset-0 rounded-full border-4 border-amber-200 border-t-amber-500 animate-spin-slow"></div>
+      <i data-lucide="clock" class="w-10 h-10 text-amber-500"></i>
+    </div>
+    <h1 class="font-extrabold text-2xl text-slate-900">Booking Submitted!</h1>
+    <p class="text-slate-500 text-sm mt-2 max-w-xs">Your booking request <span class="font-semibold text-slate-700" id="pending-id">CC-BK-00000</span> is being reviewed. We're assigning the best caregiver for you.</p>
+
+    <div class="card p-4 w-full mt-8 text-left">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center animate-pulse-soft">
+          <i data-lucide="search" class="w-4 h-4 text-amber-600"></i>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-slate-800">Finding your caregiver…</p>
+          <p class="text-xs text-slate-400">This usually takes a few minutes</p>
+        </div>
+      </div>
+    </div>
+
+    <a href="bookings.html" class="btn-secondary w-full py-3 mt-6">View My Bookings</a>
+    <button onclick="simulateAssignment()" class="text-xs text-slate-400 mt-4 underline">Demo: simulate caregiver assignment</button>
+  </div>
+
+  <!-- Assigned / needs payment state -->
+  <div id="assigned-view" class="hidden flex-col items-center animate-scale-in">
+    <div class="w-24 h-24 rounded-full bg-blue-50 flex items-center justify-center mb-6">
+      <i data-lucide="user-round-check" class="w-11 h-11 text-blue-600"></i>
+    </div>
+    <h1 class="font-extrabold text-2xl text-slate-900">Caregiver Assigned!</h1>
+    <p class="text-slate-500 text-sm mt-2 max-w-xs">Complete payment to confirm your booking.</p>
+
+    <div class="card p-4 w-full mt-7 text-left flex items-center gap-3.5">
+      <img id="cg-photo" src="" class="w-16 h-16 rounded-2xl object-cover" />
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-1.5">
+          <p class="font-bold text-slate-900" id="cg-name">—</p>
+          <i data-lucide="badge-check" class="w-4 h-4 text-blue-600"></i>
+        </div>
+        <p class="text-xs text-slate-500 mt-0.5" id="cg-exp">—</p>
+        <div class="flex items-center gap-1 mt-1">
+          <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-500 text-amber-500"></i>
+          <span class="text-xs font-semibold text-slate-700" id="cg-rating">—</span>
+        </div>
+      </div>
+    </div>
+
+    <a id="pay-btn" href="#" class="btn-primary w-full py-3.5 mt-6">Proceed to Payment</a>
+  </div>
+
+  <!-- Confirmed (post-payment) state -->
+  <div id="confirmed-view" class="hidden flex-col items-center animate-scale-in">
+    <div class="w-24 h-24 rounded-full bg-green-50 flex items-center justify-center mb-6 animate-bounce-check">
+      <i data-lucide="check-circle-2" class="w-12 h-12 text-green-600"></i>
+    </div>
+    <h1 class="font-extrabold text-2xl text-slate-900">Booking Confirmed!</h1>
+    <p class="text-slate-500 text-sm mt-2 max-w-xs">Your caregiver will arrive as scheduled. You'll get a reminder before the visit.</p>
+
+    <div class="card p-5 w-full mt-7 text-left">
+      <div class="flex items-center gap-3.5 pb-4 border-b border-slate-100">
+        <img id="conf-cg-photo" src="" class="w-16 h-16 rounded-2xl object-cover" />
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-1.5">
+            <p class="font-bold text-slate-900" id="conf-cg-name">—</p>
+            <i data-lucide="badge-check" class="w-4 h-4 text-blue-600"></i>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5" id="conf-cg-exp">—</p>
+          <div class="flex items-center gap-3 mt-1.5">
+            <span class="flex items-center gap-1 text-xs font-semibold text-slate-700"><i data-lucide="star" class="w-3.5 h-3.5 fill-amber-500 text-amber-500"></i><span id="conf-cg-rating">—</span></span>
+            <span class="text-xs text-slate-400" id="conf-cg-services">—</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-1" id="conf-cg-lang">—</p>
+        </div>
+      </div>
+      <div class="flex gap-3 pt-4">
+        <button onclick="UI.toast('Calling Priya Raman…','info')" class="btn-secondary flex-1 py-2.5 text-sm flex items-center justify-center gap-1.5"><i data-lucide="phone" class="w-4 h-4"></i> Call</button>
+        <button onclick="UI.toast('Live tracking will be available closer to the visit','info')" class="btn-primary flex-1 py-2.5 text-sm flex items-center justify-center gap-1.5"><i data-lucide="map-pin" class="w-4 h-4"></i> Track</button>
+      </div>
+    </div>
+
+    <div class="flex gap-3 w-full mt-6">
+      <a href="home.html" class="btn-secondary flex-1 py-3 text-sm text-center">Back Home</a>
+      <a href="bookings.html" class="btn-primary flex-1 py-3 text-sm text-center">View Booking</a>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/mockData.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script>
+  UI.requireAuth();
+
+  const params = new URLSearchParams(location.search);
+  const stage = params.get("stage") || "pending";
+  const caregiver = MOCK.caregivers[Math.floor(Math.random() * MOCK.caregivers.length)];
+  const bookingId = "CC-BK-" + Math.floor(80000 + Math.random() * 9999);
+
+  function show(view) {
+    ["pending-view", "assigned-view", "confirmed-view"].forEach(id => {
+      const el = document.getElementById(id);
+      el.classList.add("hidden");
+      el.classList.remove("flex");
+    });
+    const el = document.getElementById(view);
+    el.classList.remove("hidden");
+    el.classList.add("flex");
+    UI.icons();
+  }
+
+  document.getElementById("pending-id").textContent = bookingId;
+
+  function fillCaregiver(prefix) {
+    document.getElementById(prefix + "photo").src = caregiver.photo;
+    document.getElementById(prefix + "name").textContent = caregiver.name;
+    document.getElementById(prefix + "exp").textContent = `${caregiver.experience} experience`;
+    document.getElementById(prefix + "rating").textContent = caregiver.rating;
+    if (document.getElementById(prefix + "services")) {
+      document.getElementById(prefix + "services").textContent = `${caregiver.completedServices} services completed`;
+    }
+    if (document.getElementById(prefix + "lang")) {
+      document.getElementById(prefix + "lang").textContent = "Speaks " + caregiver.languages.join(", ");
+    }
+  }
+
+  function simulateAssignment() {
+    fillCaregiver("cg-");
+    document.getElementById("pay-btn").href = `payment.html?id=${bookingId}&caregiver=${caregiver.id}`;
+    show("assigned-view");
+  }
+
+  if (stage === "pending") {
+    show("pending-view");
+    setTimeout(simulateAssignment, 3500);
+  } else if (stage === "assigned") {
+    fillCaregiver("cg-");
+    document.getElementById("pay-btn").href = `payment.html?id=${params.get("id") || bookingId}&caregiver=${caregiver.id}`;
+    show("assigned-view");
+  } else if (stage === "confirmed") {
+    fillCaregiver("conf-cg-");
+    show("confirmed-view");
+  }
+</script>
+</body>
+</html>

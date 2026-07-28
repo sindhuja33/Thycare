@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Verify OTP — CareConnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="css/design-system.css" />
+<link rel="stylesheet" href="css/animations.css" />
+</head>
+<body class="bg-[var(--canvas)]">
+
+<div class="app-frame flex flex-col px-6">
+  <div class="status-spacer"></div>
+  <div class="flex items-center pt-3">
+    <a href="login.html" id="back-link" class="nav-btn"><i data-lucide="arrow-left" class="w-[18px] h-[18px]"></i></a>
+  </div>
+
+  <div class="mt-8 anim-fade-up">
+    <div class="w-16 h-16 rounded-[22px] hero-gradient flex items-center justify-center shadow-lg mb-6">
+      <i data-lucide="message-square-lock" class="w-8 h-8 text-white"></i>
+    </div>
+    <h1 class="text-[24px] font-extrabold text-[var(--ink-900)] tracking-tight" id="otp-title">Enter verification code</h1>
+    <p class="text-[var(--ink-500)] text-[14px] mt-1.5 font-medium">Sent to <span id="phone-display" class="font-bold text-[var(--ink-800)]">+91 98765 43210</span></p>
+  </div>
+
+  <div class="mt-9 anim-fade-up stagger-2">
+    <div class="flex gap-3 justify-between" id="otp-boxes">
+      <input class="otp-box field text-center text-[26px] font-extrabold !w-full !p-0 h-16" maxlength="1" inputmode="numeric" />
+      <input class="otp-box field text-center text-[26px] font-extrabold !w-full !p-0 h-16" maxlength="1" inputmode="numeric" />
+      <input class="otp-box field text-center text-[26px] font-extrabold !w-full !p-0 h-16" maxlength="1" inputmode="numeric" />
+      <input class="otp-box field text-center text-[26px] font-extrabold !w-full !p-0 h-16" maxlength="1" inputmode="numeric" />
+    </div>
+    <p id="otp-error" class="text-[12.5px] text-[var(--red-500)] mt-3.5 hidden items-center gap-1.5 font-semibold">
+      <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> Incorrect OTP. Please try again.
+    </p>
+
+    <div class="flex items-center justify-between mt-7">
+      <p class="text-[13.5px] text-[var(--ink-500)] font-medium">
+        Didn't get a code?
+        <button id="resend-btn" onclick="resendOtp()" class="text-[var(--blue-600)] font-bold disabled:text-[var(--ink-400)]" disabled>Resend in <span id="resend-timer">30</span>s</button>
+      </p>
+    </div>
+
+    <button id="verify-btn" onclick="verifyOtp()" class="btn btn-primary w-full mt-7 press">
+      <span id="verify-label">Verify & Continue</span>
+    </button>
+
+    <p class="text-center text-[11.5px] text-[var(--ink-400)] mt-5 font-medium">Demo tip: any 4 digits work, except <span class="font-bold">0000</span></p>
+  </div>
+</div>
+
+<script src="js/mockData.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script>
+  UI.redirectIfAuthed();
+  const phone = sessionStorage.getItem("cc_pending_phone") || "9876543210";
+  const authMode = sessionStorage.getItem("cc_auth_mode") || "login";
+  document.getElementById("phone-display").textContent = "+91 " + phone.slice(0, 5) + " " + phone.slice(5);
+
+  if (authMode === "register") {
+    document.getElementById("otp-title").textContent = "Verify your number";
+    document.getElementById("back-link").href = "register.html";
+  }
+
+  const boxes = Array.from(document.querySelectorAll(".otp-box"));
+  boxes[0].focus();
+  boxes.forEach((box, i) => {
+    box.addEventListener("input", () => {
+      box.value = box.value.replace(/\D/g, "").slice(0, 1);
+      document.getElementById("otp-error").classList.add("hidden");
+      boxes.forEach(b => b.classList.remove("field-error"));
+      if (box.value && i < boxes.length - 1) boxes[i + 1].focus();
+      if (boxes.every(b => b.value)) verifyOtp();
+    });
+    box.addEventListener("keydown", (e) => { if (e.key === "Backspace" && !box.value && i > 0) boxes[i - 1].focus(); });
+  });
+
+  let timeLeft = 30;
+  const timerEl = document.getElementById("resend-timer");
+  const resendBtn = document.getElementById("resend-btn");
+  const countdown = setInterval(() => {
+    timeLeft--; timerEl.textContent = timeLeft;
+    if (timeLeft <= 0) { clearInterval(countdown); resendBtn.disabled = false; resendBtn.innerHTML = "Resend OTP"; }
+  }, 1000);
+
+  function resendOtp() {
+    if (resendBtn.disabled) return;
+    UI.toast("OTP resent successfully", "success");
+    resendBtn.disabled = true; timeLeft = 30;
+    resendBtn.innerHTML = `Resend in <span id="resend-timer">30</span>s`;
+    boxes.forEach(b => (b.value = "")); boxes[0].focus();
+    const t2 = setInterval(() => {
+      timeLeft--;
+      const el = document.getElementById("resend-timer");
+      if (el) el.textContent = timeLeft;
+      if (timeLeft <= 0) { clearInterval(t2); resendBtn.disabled = false; resendBtn.innerHTML = "Resend OTP"; }
+    }, 1000);
+  }
+
+  function verifyOtp() {
+    const code = boxes.map(b => b.value).join("");
+    const errorEl = document.getElementById("otp-error");
+    if (code.length !== 4) return;
+    const btn = document.getElementById("verify-btn");
+    const label = document.getElementById("verify-label");
+    btn.disabled = true;
+    label.innerHTML = `<span class="spinner w-4 h-4"></span> Verifying…`;
+    const isValid = code !== "0000";
+    UI.simulateApi({ success: isValid, delay: 1000 }).then(() => {
+      Store.init();
+      if (authMode === "register") {
+        const name = sessionStorage.getItem("cc_pending_name") || "New User";
+        const email = sessionStorage.getItem("cc_pending_email") || "";
+        Store.setUser({
+          ...Store.getUser(),
+          name, email,
+          phone: "+91 " + phone,
+          avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 60) + 1}`,
+          kycVerified: false
+        });
+        Store.setPatients([]);
+        Store.setBookings([]);
+        Store.setPlan("plan-basic");
+      }
+      Store.setAuthed(true);
+      sessionStorage.removeItem("cc_auth_mode");
+      sessionStorage.removeItem("cc_pending_name");
+      sessionStorage.removeItem("cc_pending_email");
+      UI.toast(authMode === "register" ? "Account created successfully" : "Login successful", "success");
+      setTimeout(() => (window.location.href = "home.html"), 450);
+    }).catch(() => {
+      btn.disabled = false; label.textContent = "Verify & Continue";
+      errorEl.classList.remove("hidden"); errorEl.classList.add("flex");
+      boxes.forEach(b => { b.classList.add("field-error"); b.value = ""; });
+      boxes[0].focus(); UI.icons();
+    });
+  }
+  lucide.createIcons();
+</script>
+</body>
+</html>

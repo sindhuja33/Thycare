@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Review Booking — CareConnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="css/design-system.css" />
+<link rel="stylesheet" href="css/animations.css" />
+</head>
+<body class="bg-[var(--canvas)]">
+
+<div class="app-frame">
+  <header class="app-topbar px-5 pb-4 flex items-center gap-3">
+    <a href="booking.html" class="nav-btn"><i data-lucide="arrow-left" class="w-[18px] h-[18px]"></i></a>
+    <h1 class="font-extrabold text-[17px] text-[var(--ink-900)] tracking-tight">Review Booking</h1>
+  </header>
+
+  <main id="content" class="px-5 pt-2 pb-[140px]"></main>
+
+  <div class="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto glass border-t border-[var(--ink-100)] px-5 pt-4" style="padding-bottom: calc(16px + var(--safe-bottom))">
+    <button onclick="submitBooking()" id="submit-btn" class="btn btn-primary w-full press">
+      <span id="submit-label">Confirm & Submit</span>
+    </button>
+  </div>
+</div>
+
+<script src="js/mockData.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script>
+  UI.requireAuth();
+  const draft = Store.getDraftBooking();
+  const content = document.getElementById("content");
+
+  if (!draft.serviceId) {
+    content.innerHTML = `
+      <div class="card p-9 text-center anim-fade-up">
+        <i data-lucide="calendar-x" class="w-11 h-11 text-[var(--ink-300)] mx-auto mb-3"></i>
+        <p class="font-extrabold text-[var(--ink-800)] text-[15px]">No booking in progress</p>
+        <p class="text-[13px] text-[var(--ink-500)] mt-1.5 font-medium">Start a new booking to see the review here.</p>
+        <a href="booking.html" class="btn btn-primary mt-5 !px-6 !min-h-[46px] inline-flex">Book a Service</a>
+      </div>`;
+    document.getElementById("submit-btn").classList.add("hidden");
+  } else {
+    const service = MOCK.services.find(s => s.id === draft.serviceId);
+    const patient = Store.getPatients().find(p => p.id === draft.patientId);
+
+    content.innerHTML = `
+      <div class="card overflow-hidden anim-fade-up">
+        <img src="${service?.image}" class="w-full h-36 object-cover" />
+        <div class="p-4">
+          <p class="font-extrabold text-[var(--ink-900)] tracking-tight">${service?.name}</p>
+          <p class="text-[12.5px] text-[var(--ink-500)] mt-1 font-medium">${service?.description}</p>
+        </div>
+      </div>
+
+      <div class="card p-4 mt-4 space-y-3">
+        <div class="flex items-center gap-3">
+          <img src="${patient?.photo}" class="w-11 h-11 rounded-2xl object-cover" />
+          <div><p class="text-[13.5px] font-bold text-[var(--ink-800)]">${patient?.name}</p><p class="text-[11.5px] text-[var(--ink-500)] font-medium">${patient?.relationship}</p></div>
+        </div>
+        <div class="divider"></div>
+        <div class="flex items-center justify-between text-[13px] font-medium"><span class="text-[var(--ink-500)] flex items-center gap-1.5"><i data-lucide="calendar" class="w-4 h-4"></i>Date & Time</span><span class="font-bold text-[var(--ink-800)]">${draft.date ? UI.formatDate(draft.date) : "—"}, ${draft.time || "—"}</span></div>
+        <div class="flex items-center justify-between text-[13px] font-medium"><span class="text-[var(--ink-500)] flex items-center gap-1.5"><i data-lucide="timer" class="w-4 h-4"></i>Duration</span><span class="font-bold text-[var(--ink-800)]">${draft.duration || "—"}</span></div>
+        <div class="flex items-center justify-between text-[13px] font-medium"><span class="text-[var(--ink-500)] flex items-center gap-1.5"><i data-lucide="map-pin" class="w-4 h-4"></i>Address</span><span class="font-bold text-[var(--ink-800)]">${draft.addressId || "—"}</span></div>
+      </div>
+
+      <div class="card p-4 mt-4">
+        <div class="flex items-center justify-between"><span class="font-extrabold text-[var(--ink-900)]">Total Payable</span><span class="font-extrabold text-[var(--blue-600)] text-[19px]">${UI.formatCurrency(draft.amount || 0)}</span></div>
+      </div>
+
+      <a href="booking.html" class="flex items-center justify-center gap-1.5 text-[13px] text-[var(--blue-600)] font-bold mt-4">
+        <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Edit Booking Details
+      </a>
+    `;
+  }
+  UI.icons();
+
+  function submitBooking() {
+    const btn = document.getElementById("submit-btn");
+    btn.disabled = true;
+    document.getElementById("submit-label").innerHTML = `<span class="spinner w-4 h-4"></span> Submitting…`;
+    UI.simulateApi({ success: true, delay: 1300 }).then(() => window.location.href = "booking-confirmation.html?stage=pending");
+  }
+</script>
+</body>
+</html>

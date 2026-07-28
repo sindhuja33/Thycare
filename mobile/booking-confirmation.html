@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Booking Status — CareConnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="css/design-system.css" />
+<link rel="stylesheet" href="css/animations.css" />
+</head>
+<body class="bg-[var(--canvas)]">
+
+<div class="app-frame flex flex-col items-center justify-center px-6 py-10 text-center min-h-screen">
+
+  <!-- Pending -->
+  <div id="pending-view" class="hidden flex-col items-center anim-scale-in w-full">
+    <div class="w-[104px] h-[104px] rounded-full bg-[var(--amber-50)] flex items-center justify-center mb-7 relative">
+      <div class="absolute inset-0 rounded-full border-[5px] border-[var(--ink-100)] border-t-[var(--amber-500)]" style="animation: spin 1s linear infinite"></div>
+      <i data-lucide="clock" class="w-11 h-11 text-[var(--amber-500)]"></i>
+    </div>
+    <h1 class="font-extrabold text-[24px] text-[var(--ink-900)] tracking-tight">Booking Submitted!</h1>
+    <p class="text-[var(--ink-500)] text-[14px] mt-2.5 max-w-[280px] font-medium leading-relaxed">Your booking request <span class="font-bold text-[var(--ink-700)]" id="pending-id">CC-BK-00000</span> is being reviewed. We're assigning the best caregiver for you.</p>
+
+    <div class="card p-4 w-full mt-8 text-left">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-full bg-[var(--amber-50)] flex items-center justify-center anim-pulse">
+          <i data-lucide="search" class="w-4 h-4 text-[var(--amber-600)]"></i>
+        </div>
+        <div>
+          <p class="text-[13.5px] font-bold text-[var(--ink-800)]">Finding your caregiver…</p>
+          <p class="text-[11.5px] text-[var(--ink-400)] font-medium">Usually takes a few minutes</p>
+        </div>
+      </div>
+    </div>
+
+    <a href="bookings.html" class="btn btn-secondary w-full mt-6">View My Bookings</a>
+    <button onclick="simulateAssignment()" class="text-[11.5px] text-[var(--ink-400)] mt-5 underline font-semibold">Demo: simulate caregiver assignment</button>
+  </div>
+
+  <!-- Assigned -->
+  <div id="assigned-view" class="hidden flex-col items-center anim-scale-in w-full">
+    <div class="w-[104px] h-[104px] rounded-full bg-[var(--blue-50)] flex items-center justify-center mb-7">
+      <i data-lucide="user-round-check" class="w-12 h-12 text-[var(--blue-600)]"></i>
+    </div>
+    <h1 class="font-extrabold text-[24px] text-[var(--ink-900)] tracking-tight">Caregiver Assigned!</h1>
+    <p class="text-[var(--ink-500)] text-[14px] mt-2.5 max-w-[260px] font-medium">Complete payment to confirm your booking.</p>
+
+    <div class="card p-4 w-full mt-7 text-left flex items-center gap-3.5">
+      <img id="cg-photo" src="" class="w-16 h-16 rounded-2xl object-cover" />
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-1.5">
+          <p class="font-extrabold text-[var(--ink-900)] tracking-tight" id="cg-name">—</p>
+          <i data-lucide="badge-check" class="w-4 h-4 text-[var(--blue-600)]"></i>
+        </div>
+        <p class="text-[12px] text-[var(--ink-500)] mt-0.5 font-medium" id="cg-exp">—</p>
+        <div class="flex items-center gap-1 mt-1">
+          <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-500 text-amber-500"></i>
+          <span class="text-[12px] font-bold text-[var(--ink-700)]" id="cg-rating">—</span>
+        </div>
+      </div>
+    </div>
+
+    <a id="pay-btn" href="#" class="btn btn-primary w-full mt-7">Proceed to Payment</a>
+  </div>
+
+  <!-- Confirmed -->
+  <div id="confirmed-view" class="hidden flex-col items-center anim-scale-in w-full">
+    <div class="w-[104px] h-[104px] rounded-full bg-[var(--green-50)] flex items-center justify-center mb-7 anim-check">
+      <i data-lucide="check-circle-2" class="w-[52px] h-[52px] text-[var(--green-600)]"></i>
+    </div>
+    <h1 class="font-extrabold text-[24px] text-[var(--ink-900)] tracking-tight">Booking Confirmed!</h1>
+    <p class="text-[var(--ink-500)] text-[14px] mt-2.5 max-w-[280px] font-medium leading-relaxed">Your caregiver will arrive as scheduled. You'll get a reminder before the visit.</p>
+
+    <div class="card p-5 w-full mt-7 text-left">
+      <div class="flex items-center gap-3.5 pb-4 border-b border-[var(--ink-100)]">
+        <img id="conf-cg-photo" src="" class="w-16 h-16 rounded-2xl object-cover" />
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-1.5">
+            <p class="font-extrabold text-[var(--ink-900)] tracking-tight" id="conf-cg-name">—</p>
+            <i data-lucide="badge-check" class="w-4 h-4 text-[var(--blue-600)]"></i>
+          </div>
+          <p class="text-[12px] text-[var(--ink-500)] mt-0.5 font-medium" id="conf-cg-exp">—</p>
+          <div class="flex items-center gap-3 mt-1.5">
+            <span class="flex items-center gap-1 text-[12px] font-bold text-[var(--ink-700)]"><i data-lucide="star" class="w-3.5 h-3.5 fill-amber-500 text-amber-500"></i><span id="conf-cg-rating">—</span></span>
+            <span class="text-[11px] text-[var(--ink-400)] font-medium" id="conf-cg-services">—</span>
+          </div>
+          <p class="text-[11px] text-[var(--ink-400)] mt-1 font-medium" id="conf-cg-lang">—</p>
+        </div>
+      </div>
+      <div class="flex gap-3 pt-4">
+        <button onclick="UI.toast('Calling caregiver…','info')" class="btn btn-secondary btn-sm flex-1"><i data-lucide="phone" class="w-4 h-4"></i> Call</button>
+        <button onclick="UI.toast('Live tracking available closer to the visit','info')" class="btn btn-primary btn-sm flex-1"><i data-lucide="map-pin" class="w-4 h-4"></i> Track</button>
+      </div>
+    </div>
+
+    <div class="flex gap-3 w-full mt-6">
+      <a href="home.html" class="btn btn-secondary flex-1">Back Home</a>
+      <a href="bookings.html" class="btn btn-primary flex-1">View Booking</a>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/mockData.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script>
+  UI.requireAuth();
+  const params = new URLSearchParams(location.search);
+  const stage = params.get("stage") || "pending";
+  const caregiver = MOCK.caregivers[Math.floor(Math.random() * MOCK.caregivers.length)];
+  const bookingId = "CC-BK-" + Math.floor(80000 + Math.random() * 9999);
+
+  function show(view) {
+    ["pending-view", "assigned-view", "confirmed-view"].forEach(id => {
+      const el = document.getElementById(id);
+      el.classList.add("hidden"); el.classList.remove("flex");
+    });
+    const el = document.getElementById(view);
+    el.classList.remove("hidden"); el.classList.add("flex");
+    UI.icons();
+  }
+  document.getElementById("pending-id").textContent = bookingId;
+
+  function fillCaregiver(prefix) {
+    document.getElementById(prefix + "photo").src = caregiver.photo;
+    document.getElementById(prefix + "name").textContent = caregiver.name;
+    document.getElementById(prefix + "exp").textContent = `${caregiver.experience} experience`;
+    document.getElementById(prefix + "rating").textContent = caregiver.rating;
+    if (document.getElementById(prefix + "services")) document.getElementById(prefix + "services").textContent = `${caregiver.completedServices} services completed`;
+    if (document.getElementById(prefix + "lang")) document.getElementById(prefix + "lang").textContent = "Speaks " + caregiver.languages.join(", ");
+  }
+
+  function simulateAssignment() {
+    fillCaregiver("cg-");
+    document.getElementById("pay-btn").href = `payment.html?id=${bookingId}&caregiver=${caregiver.id}`;
+    show("assigned-view");
+  }
+
+  if (stage === "pending") { show("pending-view"); setTimeout(simulateAssignment, 3200); }
+  else if (stage === "assigned") {
+    fillCaregiver("cg-");
+    document.getElementById("pay-btn").href = `payment.html?id=${params.get("id") || bookingId}&caregiver=${caregiver.id}`;
+    show("assigned-view");
+  } else if (stage === "confirmed") { fillCaregiver("conf-cg-"); show("confirmed-view"); }
+</script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Home — CareConnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="css/design-system.css" />
+<link rel="stylesheet" href="css/animations.css" />
+</head>
+<body class="bg-[var(--canvas)]">
+
+<div class="app-frame">
+
+  <!-- Hero header -->
+  <div class="hero-gradient relative overflow-hidden pt-[calc(var(--safe-top)+16px)] pb-16 px-5">
+    <div class="mesh-blob w-56 h-56 bg-white/15 -top-16 -right-10"></div>
+    <div class="mesh-blob w-64 h-64 bg-emerald-300/20 bottom-0 -left-20"></div>
+
+    <div class="relative z-10 flex items-center justify-between anim-fade-up">
+      <a href="profile.html" class="flex items-center gap-3">
+        <img id="avatar" src="" class="w-11 h-11 rounded-2xl object-cover border-2 border-white/40" />
+        <div>
+          <p class="text-white/75 text-[12px] font-semibold" id="greeting-label">Good morning</p>
+          <p class="text-white font-extrabold text-[16px] tracking-tight" id="username">—</p>
+        </div>
+      </a>
+      <a href="notifications.html" class="relative w-11 h-11 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center">
+        <i data-lucide="bell" class="w-[19px] h-[19px] text-white"></i>
+        <span id="notif-dot" class="hidden absolute top-2.5 right-2.5 w-2 h-2 bg-red-400 rounded-full ring-2 ring-blue-600"></span>
+      </a>
+    </div>
+
+    <div class="relative z-10 mt-6 anim-fade-up stagger-2">
+      <div class="relative">
+        <i data-lucide="search" class="w-[17px] h-[17px] text-white/60 absolute left-4 top-1/2 -translate-y-1/2"></i>
+        <input placeholder="Search for a service…" class="w-full bg-white/15 backdrop-blur text-white placeholder-white/60 rounded-2xl pl-11 pr-4 py-3.5 text-[14.5px] font-medium border border-white/10 focus:outline-none focus:bg-white/20" onkeydown="if(event.key==='Enter') UI.toast('Searching \\''+this.value+'\\'…','info')" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <main class="scroll-content -mt-8 relative z-10">
+    <div class="px-5">
+
+      <!-- Promo Banner Carousel -->
+      <div class="relative rounded-[24px] overflow-hidden shadow-[0_16px_32px_-8px_rgba(16,24,40,0.18)] anim-fade-up stagger-3">
+        <div id="promo-track" class="flex transition-transform duration-500 ease-out"></div>
+        <div id="promo-dots" class="absolute bottom-3.5 left-1/2 -translate-x-1/2 flex gap-1.5"></div>
+      </div>
+
+      <!-- Quick Booking -->
+      <div class="mt-7 anim-fade-up stagger-4">
+        <h2 class="font-extrabold text-[var(--ink-900)] text-[16px] tracking-tight mb-3">Quick Booking</h2>
+        <div class="flex gap-3 overflow-x-auto no-scrollbar pb-1 -mx-5 px-5" id="quick-strip"></div>
+      </div>
+
+      <!-- Services -->
+      <div class="mt-8 anim-fade-up stagger-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-extrabold text-[var(--ink-900)] text-[16px] tracking-tight">Our Services</h2>
+          <span class="badge badge-blue">Home service only</span>
+        </div>
+        <div id="services-list" class="space-y-3.5"></div>
+      </div>
+
+      <!-- Recent Bookings -->
+      <div class="mt-8 anim-fade-up stagger-6">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-extrabold text-[var(--ink-900)] text-[16px] tracking-tight">Recent Bookings</h2>
+          <a href="bookings.html" class="text-[13px] text-[var(--blue-600)] font-bold">See all</a>
+        </div>
+        <div id="recent-bookings" class="space-y-3"></div>
+      </div>
+
+      <!-- FAQ preview -->
+      <div class="mt-8 anim-fade-up stagger-7">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-extrabold text-[var(--ink-900)] text-[16px] tracking-tight">Frequently Asked</h2>
+          <a href="faq.html" class="text-[13px] text-[var(--blue-600)] font-bold">View all</a>
+        </div>
+        <div id="faq-preview" class="space-y-2.5"></div>
+      </div>
+
+      <!-- Support banner -->
+      <a href="support.html" class="mt-8 mb-2 flex items-center justify-between card p-4 lift press anim-fade-up stagger-8">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-[var(--blue-50)] flex items-center justify-center">
+            <i data-lucide="headset" class="w-5 h-5 text-[var(--blue-600)]"></i>
+          </div>
+          <div>
+            <p class="font-bold text-[var(--ink-800)] text-[14.5px]">Need help?</p>
+            <p class="text-[12.5px] text-[var(--ink-500)] font-medium">Our team is here 24/7</p>
+          </div>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-[var(--ink-400)]"></i>
+      </a>
+    </div>
+  </main>
+</div>
+
+<nav id="floating-nav"></nav>
+<a href="booking.html" class="fab press"><i data-lucide="plus" class="w-6 h-6 text-white" stroke-width="2.5"></i></a>
+
+<script src="js/mockData.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script>
+  UI.requireAuth();
+  UI.initShell("home");
+
+  const user = Store.getUser();
+  document.getElementById("avatar").src = user.avatar;
+  document.getElementById("username").textContent = user.name.split(" ")[0];
+
+  const hour = new Date().getHours();
+  document.getElementById("greeting-label").textContent = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+
+  if (Store.getNotifications().filter(n => !n.read).length > 0) {
+    document.getElementById("notif-dot").classList.remove("hidden");
+  }
+
+  // Promo carousel
+  const promoColors = ["from-blue-600 to-blue-500", "from-emerald-600 to-emerald-500", "from-indigo-600 to-blue-500"];
+  const track = document.getElementById("promo-track");
+  const dotsWrap = document.getElementById("promo-dots");
+  track.innerHTML = MOCK.promos.map((p, i) => `
+    <div class="min-w-full bg-gradient-to-br ${promoColors[i % promoColors.length]} px-6 py-8 flex items-center justify-between">
+      <div>
+        <p class="text-white font-extrabold text-[22px] tracking-tight">${p.title}</p>
+        <p class="text-white/85 text-[13px] mt-1 font-medium">${p.subtitle}</p>
+      </div>
+      <i data-lucide="sparkles" class="w-9 h-9 text-white/60"></i>
+    </div>
+  `).join("");
+  dotsWrap.innerHTML = MOCK.promos.map((_, i) => `<span class="w-1.5 h-1.5 rounded-full transition-all ${i === 0 ? "bg-white w-4" : "bg-white/40"}"></span>`).join("");
+  let promoIdx = 0;
+  setInterval(() => {
+    promoIdx = (promoIdx + 1) % MOCK.promos.length;
+    track.style.transform = `translateX(-${promoIdx * 100}%)`;
+    [...dotsWrap.children].forEach((d, i) => d.className = `h-1.5 rounded-full transition-all ${i === promoIdx ? "bg-white w-4" : "bg-white/40 w-1.5"}`);
+  }, 4000);
+
+  // Quick booking strip
+  document.getElementById("quick-strip").innerHTML = MOCK.services.map(s => `
+    <a href="booking.html?service=${s.id}" class="flex flex-col items-center gap-2 shrink-0 press">
+      <div class="w-[68px] h-[68px] rounded-[22px] bg-white shadow-[var(--shadow-md)] flex items-center justify-center border border-[var(--ink-100)]">
+        <i data-lucide="${s.icon}" class="w-7 h-7 text-[var(--blue-600)]" stroke-width="1.8"></i>
+      </div>
+      <span class="text-[11px] font-bold text-[var(--ink-600)] text-center w-[68px] truncate">${s.name}</span>
+    </a>
+  `).join("");
+
+  // Services list — large premium cards
+  document.getElementById("services-list").innerHTML = MOCK.services.map(s => `
+    <a href="booking.html?service=${s.id}" class="card overflow-hidden block lift press">
+      <div class="h-[148px] relative">
+        <img src="${s.image}" class="w-full h-full object-cover" loading="lazy" />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+        <span class="absolute top-3 left-3 badge bg-white/90 text-[var(--ink-800)] backdrop-blur"><i data-lucide="star" class="w-3 h-3 fill-amber-500 text-amber-500"></i>${s.rating} <span class="text-[var(--ink-400)] font-medium">(${s.reviews})</span></span>
+      </div>
+      <div class="p-4">
+        <p class="font-extrabold text-[var(--ink-900)] text-[15.5px] tracking-tight">${s.name}</p>
+        <p class="text-[12.5px] text-[var(--ink-500)] mt-1 leading-relaxed line-clamp-2">${s.description}</p>
+        <div class="flex items-center justify-between mt-3.5">
+          <div>
+            <p class="text-[10.5px] text-[var(--ink-400)] font-semibold">Starting from</p>
+            <p class="text-[17px] font-extrabold text-[var(--blue-600)] tracking-tight">${UI.formatCurrency(s.startingPrice)}<span class="text-[11px] font-semibold text-[var(--ink-400)]"> ${s.unit}</span></p>
+          </div>
+          <span class="btn btn-primary !min-h-0 !py-2.5 !px-5 !text-[13px]">Book Now</span>
+        </div>
+      </div>
+    </a>
+  `).join("");
+
+  // Recent bookings
+  const iconMap = { "Patient Attender": "user-round", "Baby Sitter": "baby", "Elder Care": "heart-handshake", "Mother Care": "flower", "Post Surgery Care": "bandage", "Nursing Assistant": "stethoscope" };
+  const bookings = Store.getBookings().slice(0, 3);
+  const recentWrap = document.getElementById("recent-bookings");
+  recentWrap.innerHTML = bookings.length === 0
+    ? `<div class="card p-7 text-center"><i data-lucide="calendar-x" class="w-8 h-8 text-[var(--ink-300)] mx-auto mb-2"></i><p class="text-[13.5px] font-semibold text-[var(--ink-500)]">No bookings yet</p></div>`
+    : bookings.map(b => `
+      <a href="booking-details.html?id=${b.id}" class="card p-3.5 flex items-center justify-between lift press block">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-12 h-12 rounded-2xl bg-[var(--blue-50)] flex items-center justify-center shrink-0">
+            <i data-lucide="${iconMap[b.service] || "stethoscope"}" class="w-5 h-5 text-[var(--blue-600)]"></i>
+          </div>
+          <div class="min-w-0">
+            <p class="font-bold text-[var(--ink-800)] text-[14px] truncate">${b.service}</p>
+            <p class="text-[12px] text-[var(--ink-500)] font-medium mt-0.5">${b.patient} • ${UI.formatDateShort(b.date)}</p>
+          </div>
+        </div>
+        ${UI.statusBadge(b.status)}
+      </a>
+    `).join("");
+
+  // FAQ preview
+  document.getElementById("faq-preview").innerHTML = MOCK.faqs.slice(0, 3).map(f => `
+    <div class="card p-4 flex items-center justify-between">
+      <p class="text-[13.5px] font-semibold text-[var(--ink-700)] pr-3">${f.q}</p>
+      <i data-lucide="chevron-right" class="w-4 h-4 text-[var(--ink-400)] shrink-0"></i>
+    </div>
+  `).join("");
+
+  UI.icons();
+</script>
+</body>
+</html>

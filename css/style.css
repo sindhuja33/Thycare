@@ -1,0 +1,61 @@
+/* CareConnect — base styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --brand-blue: #2563eb;
+  --brand-blue-dark: #1d4ed8;
+  --brand-green: #16a34a;
+  --bg-app: #f5f7fb;
+  --card-radius: 16px;
+  --btn-radius: 12px;
+}
+
+* { font-family: 'Inter', sans-serif; }
+
+html, body {
+  background: var(--bg-app);
+  -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
+}
+
+body.dark {
+  --bg-app: #0f1420;
+  background: var(--bg-app);
+  color: #e5e9f0;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+body.dark ::-webkit-scrollbar-thumb { background: #334155; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Glassmorphism */
+.glass {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+body.dark .glass {
+  background: rgba(20, 26, 41, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.card-shadow { box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04); }
+.card-shadow-lg { box-shadow: 0 12px 32px rgba(15, 23, 42, 0.10), 0 4px 8px rgba(15, 23, 42, 0.04); }
+
+.brand-gradient { background: linear-gradient(135deg, #2563eb 0%, #16a34a 100%); }
+.brand-gradient-soft { background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%); }
+
+body.dark .bg-white { background-color: #161d2e !important; }
+body.dark .text-slate-900 { color: #f1f5f9 !important; }
+body.dark .text-slate-800 { color: #e2e8f0 !important; }
+body.dark .text-slate-700 { color: #cbd5e1 !important; }
+body.dark .text-slate-600 { color: #94a3b8 !important; }
+body.dark .text-slate-500 { color: #94a3b8 !important; }
+body.dark .border-slate-100 { border-color: #1f2937 !important; }
+body.dark .border-slate-200 { border-color: #263043 !important; }
+body.dark .bg-slate-50 { background-color: #0f1420 !important; }
+body.dark .bg-slate-100 { background-color: #1a2233 !important; }

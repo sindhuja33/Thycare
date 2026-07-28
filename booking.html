@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Book a Service — CareConnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/components.css" />
+<link rel="stylesheet" href="css/animations.css" />
+<link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body class="min-h-screen bg-slate-50">
+
+<div class="max-w-2xl mx-auto min-h-screen bg-slate-50">
+  <!-- Header -->
+  <header class="sticky top-0 z-30 glass px-4 lg:px-8 py-4 border-b border-slate-100 flex items-center gap-3">
+    <button onclick="prevStep()" id="back-btn" class="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center">
+      <i data-lucide="arrow-left" class="w-4 h-4 text-slate-600"></i>
+    </button>
+    <div class="flex-1">
+      <h1 class="font-bold text-slate-900 text-[15px]" id="step-title">Choose Service</h1>
+      <p class="text-xs text-slate-400" id="step-sub">Step 1 of 7</p>
+    </div>
+  </header>
+
+  <!-- Step dots -->
+  <div class="flex items-center gap-1.5 px-4 lg:px-8 py-3" id="step-dots"></div>
+
+  <main class="px-4 lg:px-8 pb-32">
+
+    <!-- STEP 1: Service -->
+    <section id="step-1" class="step-panel space-y-3 animate-fade-in-up"></section>
+
+    <!-- STEP 2: Patient -->
+    <section id="step-2" class="step-panel hidden space-y-3 animate-fade-in-up"></section>
+
+    <!-- STEP 3: Date & Time -->
+    <section id="step-3" class="step-panel hidden animate-fade-in-up">
+      <p class="text-sm font-semibold text-slate-700 mb-2.5">Select Date</p>
+      <div class="flex gap-2.5 overflow-x-auto no-scrollbar pb-2" id="date-strip"></div>
+
+      <p class="text-sm font-semibold text-slate-700 mt-6 mb-2.5">Select Time</p>
+      <div class="grid grid-cols-3 gap-2.5" id="time-grid"></div>
+
+      <div id="urgent-warning" class="hidden mt-4 flex items-center gap-2 bg-amber-50 text-amber-700 text-xs font-medium px-3.5 py-3 rounded-xl">
+        <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i>
+        Booking within 24 hours may have limited caregiver availability.
+      </div>
+    </section>
+
+    <!-- STEP 4: Duration -->
+    <section id="step-4" class="step-panel hidden space-y-3 animate-fade-in-up"></section>
+
+    <!-- STEP 5: Requirements + Reports -->
+    <section id="step-5" class="step-panel hidden animate-fade-in-up">
+      <p class="text-sm font-semibold text-slate-700 mb-2.5">Special Requirements</p>
+      <textarea id="requirements-input" rows="4" class="input-field w-full resize-none" placeholder="e.g. Patient needs help with mobility, prefers Tamil-speaking caregiver…"></textarea>
+
+      <p class="text-sm font-semibold text-slate-700 mt-6 mb-2.5">Upload Medical Reports (optional)</p>
+      <div id="upload-zone" onclick="simulateUpload()" class="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/40 transition">
+        <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 mx-auto mb-2"></i>
+        <p class="text-sm font-medium text-slate-600">Tap to upload files</p>
+        <p class="text-xs text-slate-400 mt-1">PDF, JPG up to 10MB</p>
+      </div>
+      <div id="uploaded-files" class="space-y-2 mt-3"></div>
+    </section>
+
+    <!-- STEP 6: Address -->
+    <section id="step-6" class="step-panel hidden space-y-3 animate-fade-in-up"></section>
+
+    <!-- STEP 7: Review -->
+    <section id="step-7" class="step-panel hidden animate-fade-in-up"></section>
+
+  </main>
+
+  <!-- Sticky footer CTA -->
+  <div class="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto glass border-t border-slate-100 px-4 lg:px-8 py-4">
+    <button onclick="nextStep()" id="continue-btn" class="btn-primary w-full py-3.5 flex items-center justify-center gap-2 press-scale">
+      <span id="continue-label">Continue</span>
+    </button>
+  </div>
+</div>
+
+<script src="js/mockData.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script>
+  UI.requireAuth();
+  UI.applyDarkMode();
+
+  const TOTAL_STEPS = 7;
+  let currentStep = 1;
+  const draft = {
+    serviceId: null, patientId: null, date: null, time: null,
+    duration: null, requirements: "", files: [], addressId: "home"
+  };
+
+  const urlParams = new URLSearchParams(location.search);
+  if (urlParams.get("service")) draft.serviceId = urlParams.get("service");
+  if (urlParams.get("patient")) draft.patientId = urlParams.get("patient");
+
+  const durations = [
+    { id: "4h", label: "4 Hours", desc: "Short visit", mult: 0.4 },
+    { id: "8h", label: "8 Hours", desc: "Half day", mult: 0.7 },
+    { id: "12h", label: "12 Hours", desc: "Full shift", mult: 1 },
+    { id: "24h", label: "24 Hours", desc: "Full day", mult: 1.8 }
+  ];
+
+  const addresses = [
+    { id: "home", label: "Home", icon: "home", address: Store.getUser().address, outOfArea: false },
+    { id: "parents", label: "Parents' House", icon: "building-2", address: "45, Green Park Colony, T. Nagar, Chennai, Tamil Nadu 600017", outOfArea: false },
+    { id: "farhouse", label: "Native Village", icon: "map-pin", address: "Village Road, Thanjavur, Tamil Nadu 613001", outOfArea: true }
+  ];
+
+  function renderStepDots() {
+    document.getElementById("step-dots").innerHTML = Array.from({ length: TOTAL_STEPS }, (_, i) => {
+      const n = i + 1;
+      const cls = n === currentStep ? "active" : n < currentStep ? "done" : "";
+      return `<span class="step-dot ${cls}"></span>`;
+    }).join("");
+  }
+
+  const stepTitles = [
+    "", "Choose Service", "Choose Patient", "Date & Time", "Duration",
+    "Requirements", "Home Address", "Review Booking"
+  ];
+
+  function renderStep1() {
+    document.getElementById("step-1").innerHTML = MOCK.services.map(s => `
+      <button onclick="selectService('${s.id}')" data-service="${s.id}"
+        class="service-option w-full text-left card p-3.5 flex items-center gap-3.5 press-scale ${draft.serviceId === s.id ? '!border-blue-500 !border-2 brand-gradient-soft' : ''}">
+        <img src="${s.image}" class="w-16 h-16 rounded-xl object-cover shrink-0" />
+        <div class="min-w-0 flex-1">
+          <p class="font-bold text-slate-900 text-sm">${s.name}</p>
+          <p class="text-xs text-slate-500 mt-0.5 line-clamp-1">${s.description}</p>
+          <p class="text-sm font-extrabold text-blue-600 mt-1.5">${UI.formatCurrency(s.startingPrice)}<span class="text-[10px] font-medium text-slate-400"> ${s.unit}</span></p>
+        </div>
+        <i data-lucide="${draft.serviceId === s.id ? 'check-circle-2' : 'circle'}" class="w-5 h-5 ${draft.serviceId === s.id ? 'text-blue-600' : 'text-slate-300'} shrink-0"></i>
+      </button>
+    `).join("");
+    UI.icons();
+  }
+  function selectService(id) { draft.serviceId = id; renderStep1(); }
+
+  function renderStep2() {
+    const patients = Store.getPatients();
+    if (patients.length === 0) {
+      document.getElementById("step-2").innerHTML = `
+        <div class="card p-8 text-center">
+          <i data-lucide="user-x" class="w-9 h-9 text-slate-300 mx-auto mb-3"></i>
+          <p class="font-semibold text-slate-700">No patients found</p>
+          <p class="text-sm text-slate-500 mt-1">Add a patient profile before booking a service.</p>
+          <a href="patients.html" class="btn-primary px-5 py-2.5 text-sm mt-4 inline-block">Add Patient</a>
+        </div>`;
+      return;
+    }
+    document.getElementById("step-2").innerHTML = patients.map(p => `
+      <button onclick="selectPatient('${p.id}')" class="w-full text-left card p-3.5 flex items-center gap-3.5 press-scale ${draft.patientId === p.id ? '!border-blue-500 !border-2 brand-gradient-soft' : ''}">
+        <img src="${p.photo}" class="w-14 h-14 rounded-xl object-cover shrink-0" />
+        <div class="min-w-0 flex-1">
+          <p class="font-bold text-slate-900 text-sm">${p.name}</p>
+          <p class="text-xs text-slate-500 mt-0.5">${p.relationship} • ${p.age} ${typeof p.age === "number" ? "years" : ""}</p>
+        </div>
+        <i data-lucide="${draft.patientId === p.id ? 'check-circle-2' : 'circle'}" class="w-5 h-5 ${draft.patientId === p.id ? 'text-blue-600' : 'text-slate-300'} shrink-0"></i>
+      </button>
+    `).join("");
+    UI.icons();
+  }
+  function selectPatient(id) { draft.patientId = id; renderStep2(); }
+
+  function renderStep3() {
+    const dateStrip = document.getElementById("date-strip");
+    const days = [];
+    for (let i = 0; i < 10; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      days.push(d);
+    }
+    dateStrip.innerHTML = days.map(d => {
+      const iso = d.toISOString().slice(0, 10);
+      const isSel = draft.date === iso;
+      return `
+      <button onclick="selectDate('${iso}')" class="shrink-0 w-16 py-3 rounded-2xl border-2 flex flex-col items-center gap-0.5 press-scale ${isSel ? "border-blue-500 brand-gradient text-white" : "border-slate-100 bg-white text-slate-700"}">
+        <span class="text-[10px] font-semibold ${isSel ? "text-white/80" : "text-slate-400"}">${d.toLocaleDateString("en-IN", { weekday: "short" })}</span>
+        <span class="text-lg font-extrabold">${d.getDate()}</span>
+        <span class="text-[10px] font-medium ${isSel ? "text-white/80" : "text-slate-400"}">${d.toLocaleDateString("en-IN", { month: "short" })}</span>
+      </button>`;
+    }).join("");
+
+    const times = ["06:00 AM", "08:00 AM", "10:00 AM", "12:00 PM", "02:00 PM", "04:00 PM", "06:00 PM", "08:00 PM", "10:00 PM"];
+    document.getElementById("time-grid").innerHTML = times.map(t => `
+      <button onclick="selectTime('${t}')" class="py-2.5 rounded-xl border-2 text-sm font-semibold press-scale ${draft.time === t ? "border-blue-500 brand-gradient text-white" : "border-slate-100 bg-white text-slate-600"}">${t}</button>
+    `).join("");
+
+    checkUrgent();
+  }
+  function selectDate(iso) { draft.date = iso; renderStep3(); }
+  function selectTime(t) { draft.time = t; renderStep3(); }
+  function checkUrgent() {
+    const warn = document.getElementById("urgent-warning");
+    if (!draft.date) { warn.classList.add("hidden"); return; }
+    const hours = (new Date(draft.date) - new Date()) / 36e5;
+    warn.classList.toggle("hidden", hours > 24);
+  }
+
+  function renderStep4() {
+    const service = MOCK.services.find(s => s.id === draft.serviceId);
+    const base = service ? service.startingPrice : 999;
+    document.getElementById("step-4").innerHTML = durations.map(d => `
+      <button onclick="selectDuration('${d.id}')" class="w-full text-left card p-4 flex items-center justify-between press-scale ${draft.duration === d.id ? '!border-blue-500 !border-2 brand-gradient-soft' : ''}">
+        <div>
+          <p class="font-bold text-slate-900 text-sm">${d.label}</p>
+          <p class="text-xs text-slate-500 mt-0.5">${d.desc}</p>
+        </div>
+        <div class="text-right">
+          <p class="font-extrabold text-blue-600 text-sm">${UI.formatCurrency(Math.round(base * d.mult))}</p>
+          <i data-lucide="${draft.duration === d.id ? 'check-circle-2' : 'circle'}" class="w-5 h-5 ${draft.duration === d.id ? 'text-blue-600' : 'text-slate-300'} ml-auto mt-1"></i>
+        </div>
+      </button>
+    `).join("");
+    UI.icons();
+  }
+  function selectDuration(id) { draft.duration = id; renderStep4(); }
+
+  function simulateUpload() {
+    const names = ["Blood_Report.pdf", "Prescription.jpg", "Discharge_Summary.pdf", "Scan_Report.pdf"];
+    const name = names[Math.floor(Math.random() * names.length)];
+    draft.files.push({ name, size: (Math.random() * 3 + 0.4).toFixed(1) + " MB" });
+    renderFiles();
+    UI.toast("File uploaded", "success");
+  }
+  function renderFiles() {
+    document.getElementById("uploaded-files").innerHTML = draft.files.map((f, i) => `
+      <div class="flex items-center justify-between card p-3">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <i data-lucide="file-check" class="w-4 h-4 text-green-600 shrink-0"></i>
+          <span class="text-sm text-slate-700 truncate">${f.name}</span>
+          <span class="text-xs text-slate-400 shrink-0">${f.size}</span>
+        </div>
+        <button onclick="removeFile(${i})"><i data-lucide="x" class="w-4 h-4 text-slate-400"></i></button>
+      </div>
+    `).join("");
+    UI.icons();
+  }
+  function removeFile(i) { draft.files.splice(i, 1); renderFiles(); }
+
+  function renderStep6() {
+    document.getElementById("step-6").innerHTML = addresses.map(a => `
+      <button onclick="selectAddress('${a.id}')" class="w-full text-left card p-3.5 flex items-center gap-3.5 press-scale ${draft.addressId === a.id ? '!border-blue-500 !border-2 brand-gradient-soft' : ''}">
+        <div class="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+          <i data-lucide="${a.icon}" class="w-5 h-5 text-blue-600"></i>
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2">
+            <p class="font-bold text-slate-900 text-sm">${a.label}</p>
+            ${a.outOfArea ? `<span class="badge badge-red !text-[10px]">Outside Service Area</span>` : ""}
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5 truncate">${a.address}</p>
+        </div>
+        <i data-lucide="${draft.addressId === a.id ? 'check-circle-2' : 'circle'}" class="w-5 h-5 ${draft.addressId === a.id ? 'text-blue-600' : 'text-slate-300'} shrink-0"></i>
+      </button>
+    `).join("") + `
+      <button onclick="UI.toast('GPS is disabled. Enable location to add a new address.','error')" class="w-full text-left card p-3.5 flex items-center gap-3 press-scale border-dashed">
+        <div class="w-11 h-11 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
+          <i data-lucide="plus" class="w-5 h-5 text-slate-500"></i>
+        </div>
+        <p class="font-semibold text-slate-600 text-sm">Add New Address</p>
+      </button>`;
+    UI.icons();
+  }
+  function selectAddress(id) { draft.addressId = id; renderStep6(); }
+
+  function renderStep7() {
+    const service = MOCK.services.find(s => s.id === draft.serviceId);
+    const patient = Store.getPatients().find(p => p.id === draft.patientId);
+    const duration = durations.find(d => d.id === draft.duration);
+    const address = addresses.find(a => a.id === draft.addressId);
+    const base = service ? service.startingPrice : 999;
+    const amount = duration ? Math.round(base * duration.mult) : base;
+    const plan = MOCK.plans.find(p => p.id === Store.getPlan());
+    const discountPct = plan?.id === "plan-premium" ? 10 : plan?.id === "plan-premium-plus" ? 20 : 0;
+    const discount = Math.round(amount * discountPct / 100);
+    const total = amount - discount;
+
+    Store.setDraftBooking({ ...draft, amount: total, baseAmount: amount, discount });
+
+    document.getElementById("step-7").innerHTML = `
+      <div class="card p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-slate-500">Service</p>
+          <p class="text-sm font-semibold text-slate-800">${service?.name || "—"}</p>
+        </div>
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-slate-500">Patient</p>
+          <p class="text-sm font-semibold text-slate-800">${patient?.name || "—"}</p>
+        </div>
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-slate-500">Date & Time</p>
+          <p class="text-sm font-semibold text-slate-800">${draft.date ? UI.formatDate(draft.date) : "—"}, ${draft.time || "—"}</p>
+        </div>
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-slate-500">Duration</p>
+          <p class="text-sm font-semibold text-slate-800">${duration?.label || "—"}</p>
+        </div>
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-slate-500">Address</p>
+          <p class="text-sm font-semibold text-slate-800 text-right max-w-[60%]">${address?.label || "—"}</p>
+        </div>
+        ${draft.requirements ? `
+        <div class="divider"></div>
+        <div>
+          <p class="text-xs text-slate-500 mb-1">Requirements</p>
+          <p class="text-sm text-slate-700">${draft.requirements}</p>
+        </div>` : ""}
+        ${draft.files.length ? `
+        <div>
+          <p class="text-xs text-slate-500 mb-1">Reports (${draft.files.length})</p>
+        </div>` : ""}
+      </div>
+
+      <div class="card p-4 mt-4">
+        <p class="text-sm font-bold text-slate-800 mb-3">Fare Summary</p>
+        <div class="flex items-center justify-between text-sm mb-1.5">
+          <span class="text-slate-500">Base Amount</span>
+          <span class="text-slate-700">${UI.formatCurrency(amount)}</span>
+        </div>
+        ${discount > 0 ? `
+        <div class="flex items-center justify-between text-sm mb-1.5">
+          <span class="text-slate-500">${plan.name} Discount (${discountPct}%)</span>
+          <span class="text-green-600">-${UI.formatCurrency(discount)}</span>
+        </div>` : ""}
+        <div class="divider my-2.5"></div>
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-slate-900">Total Payable</span>
+          <span class="font-extrabold text-blue-600 text-lg">${UI.formatCurrency(total)}</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 mt-4 text-xs text-slate-500">
+        <i data-lucide="shield-check" class="w-4 h-4 text-green-600"></i>
+        Caregiver assigned by admin after submission. Payment is collected after assignment.
+      </div>
+    `;
+    UI.icons();
+  }
+
+  function validateStep() {
+    if (currentStep === 1 && !draft.serviceId) { UI.toast("Please select a service", "error"); return false; }
+    if (currentStep === 2 && !draft.patientId) { UI.toast("Please select a patient", "error"); return false; }
+    if (currentStep === 3 && (!draft.date || !draft.time)) { UI.toast("Please select date and time", "error"); return false; }
+    if (currentStep === 4 && !draft.duration) { UI.toast("Please select duration", "error"); return false; }
+    if (currentStep === 6 && addresses.find(a => a.id === draft.addressId)?.outOfArea) { UI.toast("This address is outside our service area", "error"); return false; }
+    return true;
+  }
+
+  function showStep(n) {
+    document.querySelectorAll(".step-panel").forEach(el => el.classList.add("hidden"));
+    document.getElementById("step-" + n).classList.remove("hidden");
+    document.getElementById("step-title").textContent = stepTitles[n];
+    document.getElementById("step-sub").textContent = `Step ${n} of ${TOTAL_STEPS}`;
+    document.getElementById("continue-label").textContent = n === TOTAL_STEPS ? "Submit Booking" : "Continue";
+    renderStepDots();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    if (n === 1) renderStep1();
+    if (n === 2) renderStep2();
+    if (n === 3) renderStep3();
+    if (n === 4) renderStep4();
+    if (n === 6) renderStep6();
+    if (n === 7) renderStep7();
+  }
+
+  function nextStep() {
+    if (!validateStep()) return;
+    if (currentStep < TOTAL_STEPS) {
+      currentStep++;
+      showStep(currentStep);
+    } else {
+      submitBooking();
+    }
+  }
+  function prevStep() {
+    if (currentStep === 1) { window.location.href = "home.html"; return; }
+    currentStep--;
+    showStep(currentStep);
+  }
+
+  function submitBooking() {
+    const btn = document.getElementById("continue-btn");
+    btn.disabled = true;
+    document.getElementById("continue-label").innerHTML = `<span class="spinner w-4 h-4"></span> Submitting…`;
+    UI.simulateApi({ success: true, delay: 1600 }).then(() => {
+      window.location.href = "booking-confirmation.html?stage=pending";
+    });
+  }
+
+  showStep(1);
+</script>
+</body>
+</html>

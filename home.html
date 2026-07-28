@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Home — CareConnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/components.css" />
+<link rel="stylesheet" href="css/animations.css" />
+<link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body class="min-h-screen bg-slate-50">
+
+<div class="flex">
+  <!-- Desktop Sidebar -->
+  <aside id="sidebar"></aside>
+
+  <div class="desktop-main">
+    <!-- Desktop Top Nav -->
+    <header class="hidden lg:flex items-center justify-between px-8 py-5 glass border-b border-slate-100 sticky top-0 z-30">
+      <div>
+        <h1 class="text-xl font-extrabold text-slate-900" id="desktop-greeting">Good morning, Sindhuja</h1>
+        <p class="text-sm text-slate-500 mt-0.5">Let's find the right care for your family today.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="relative">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+          <input placeholder="Search services…" class="input-field pl-10 w-72" onkeydown="if(event.key==='Enter') UI.toast('Searching for \\''+this.value+'\\'…','info')" />
+        </div>
+        <a href="notifications.html" class="relative w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center hover:bg-slate-50">
+          <i data-lucide="bell" class="w-[18px] h-[18px] text-slate-600"></i>
+          <span id="desktop-notif-dot" class="hidden absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+        </a>
+      </div>
+    </header>
+
+    <main class="page-container content-scroll">
+
+      <!-- Mobile Top Header -->
+      <header class="lg:hidden sticky top-0 z-30 glass px-4 pt-5 pb-4 border-b border-slate-100">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <img id="mobile-avatar" src="" class="w-11 h-11 rounded-full object-cover border-2 border-white shadow" />
+            <div>
+              <p class="text-xs text-slate-500" id="mobile-greeting-label">Good morning</p>
+              <p class="text-[15px] font-bold text-slate-900" id="mobile-username">Sindhuja</p>
+            </div>
+          </div>
+          <a href="notifications.html" class="relative w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center card-shadow">
+            <i data-lucide="bell" class="w-[18px] h-[18px] text-slate-600"></i>
+            <span id="mobile-notif-dot" class="hidden absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+          </a>
+        </div>
+        <div class="relative mt-4">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+          <input placeholder="Search for a service…" class="input-field pl-10 w-full bg-white" onkeydown="if(event.key==='Enter') UI.toast('Searching for \\''+this.value+'\\'…','info')" />
+        </div>
+      </header>
+
+      <div class="px-4 lg:px-8 pt-5 pb-4">
+
+        <!-- Promo Banner Carousel -->
+        <div class="relative rounded-2xl overflow-hidden card-shadow-lg animate-fade-in-up">
+          <div id="promo-track" class="flex transition-transform duration-500 ease-out"></div>
+          <div id="promo-dots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5"></div>
+        </div>
+
+        <!-- Quick Booking strip -->
+        <div class="mt-6 animate-fade-in-up stagger-1">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="font-bold text-slate-900 text-[15px]">Quick Booking</h2>
+          </div>
+          <div class="flex gap-3 overflow-x-auto no-scrollbar pb-1" id="quick-booking-strip"></div>
+        </div>
+
+        <!-- Services -->
+        <div class="mt-7 animate-fade-in-up stagger-2">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="font-bold text-slate-900 text-[15px]">Our Services</h2>
+            <span class="text-xs text-slate-400 font-medium">Home service only</span>
+          </div>
+          <div id="services-grid" class="grid-services"></div>
+        </div>
+
+        <!-- Recent Bookings -->
+        <div class="mt-8 animate-fade-in-up stagger-3">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="font-bold text-slate-900 text-[15px]">Recent Bookings</h2>
+            <a href="bookings.html" class="text-xs text-blue-600 font-semibold">See all</a>
+          </div>
+          <div id="recent-bookings" class="space-y-3"></div>
+        </div>
+
+        <!-- FAQ preview -->
+        <div class="mt-8 animate-fade-in-up stagger-4">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="font-bold text-slate-900 text-[15px]">Frequently Asked</h2>
+            <a href="faq.html" class="text-xs text-blue-600 font-semibold">View all</a>
+          </div>
+          <div id="faq-preview" class="space-y-2"></div>
+        </div>
+
+        <!-- Support banner -->
+        <a href="support.html" class="mt-8 mb-4 flex items-center justify-between card p-4 hover-lift press-scale animate-fade-in-up stagger-5">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center">
+              <i data-lucide="headset" class="w-5 h-5 text-blue-600"></i>
+            </div>
+            <div>
+              <p class="font-semibold text-slate-800 text-sm">Need help?</p>
+              <p class="text-xs text-slate-500">Our support team is here 24/7</p>
+            </div>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+        </a>
+      </div>
+    </main>
+  </div>
+
+  <!-- Desktop Right Panel -->
+  <aside class="desktop-right-panel hidden lg:flex flex-col gap-5 p-6 border-l border-slate-100 overflow-y-auto">
+    <div class="card p-5 brand-gradient-soft border-blue-100">
+      <div class="flex items-center justify-between">
+        <p class="text-xs font-bold text-blue-700 uppercase tracking-wide">Your Plan</p>
+        <i data-lucide="gem" class="w-4 h-4 text-blue-600"></i>
+      </div>
+      <p class="text-lg font-extrabold text-slate-900 mt-2" id="side-plan-name">Premium</p>
+      <p class="text-xs text-slate-600 mt-1">10% off all bookings</p>
+      <a href="subscriptions.html" class="btn-primary w-full py-2.5 mt-4 text-sm block text-center">Manage Plan</a>
+    </div>
+
+    <div class="card p-5">
+      <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">Your Patients</p>
+      <div id="side-patients" class="space-y-2.5"></div>
+      <a href="patients.html" class="btn-secondary w-full py-2.5 mt-3 text-sm block text-center">Manage Patients</a>
+    </div>
+
+    <div class="card p-5">
+      <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">Upcoming Booking</p>
+      <div id="side-upcoming"></div>
+    </div>
+  </aside>
+</div>
+
+<!-- Bottom Nav (mobile) -->
+<nav id="bottom-nav"></nav>
+
+<!-- FAB -->
+<a href="booking.html" class="fab brand-gradient mobile-only press-scale">
+  <i data-lucide="plus" class="w-6 h-6 text-white"></i>
+</a>
+
+<script src="js/mockData.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script>
+  UI.requireAuth();
+  UI.initShell("home");
+
+  const user = Store.getUser();
+  document.getElementById("mobile-avatar").src = user.avatar;
+  document.getElementById("mobile-username").textContent = user.name.split(" ")[0];
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  document.getElementById("mobile-greeting-label").textContent = greeting;
+  document.getElementById("desktop-greeting").textContent = `${greeting}, ${user.name.split(" ")[0]}`;
+
+  const unread = Store.getNotifications().filter(n => !n.read).length;
+  if (unread > 0) {
+    document.getElementById("mobile-notif-dot").classList.remove("hidden");
+    document.getElementById("desktop-notif-dot").classList.remove("hidden");
+  }
+
+  // Promo carousel
+  const track = document.getElementById("promo-track");
+  const dotsWrap = document.getElementById("promo-dots");
+  track.innerHTML = MOCK.promos.map(p => `
+    <div class="min-w-full bg-gradient-to-r ${p.color} px-6 py-7 flex items-center justify-between">
+      <div>
+        <p class="text-white font-extrabold text-xl">${p.title}</p>
+        <p class="text-white/85 text-sm mt-1">${p.subtitle}</p>
+      </div>
+      <i data-lucide="sparkles" class="w-9 h-9 text-white/70"></i>
+    </div>
+  `).join("");
+  dotsWrap.innerHTML = MOCK.promos.map((_, i) => `<span class="w-1.5 h-1.5 rounded-full ${i === 0 ? "bg-white" : "bg-white/40"}"></span>`).join("");
+  let promoIdx = 0;
+  setInterval(() => {
+    promoIdx = (promoIdx + 1) % MOCK.promos.length;
+    track.style.transform = `translateX(-${promoIdx * 100}%)`;
+    [...dotsWrap.children].forEach((d, i) => d.className = `w-1.5 h-1.5 rounded-full ${i === promoIdx ? "bg-white" : "bg-white/40"}`);
+  }, 4000);
+
+  // Quick booking strip
+  document.getElementById("quick-booking-strip").innerHTML = MOCK.services.map(s => `
+    <a href="booking.html?service=${s.id}" class="flex flex-col items-center gap-2 shrink-0 press-scale">
+      <div class="w-16 h-16 rounded-2xl bg-white card-shadow flex items-center justify-center hover-lift">
+        <i data-lucide="${s.icon}" class="w-7 h-7 text-blue-600"></i>
+      </div>
+      <span class="text-[11px] font-semibold text-slate-600 text-center w-16 truncate">${s.name}</span>
+    </a>
+  `).join("");
+
+  // Services grid
+  document.getElementById("services-grid").innerHTML = MOCK.services.map(s => `
+    <a href="booking.html?service=${s.id}" class="card overflow-hidden hover-lift press-scale animate-fade-in-up">
+      <div class="h-28 lg:h-36 bg-slate-100 overflow-hidden">
+        <img src="${s.image}" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none'" />
+      </div>
+      <div class="p-3">
+        <p class="font-bold text-slate-900 text-sm truncate">${s.name}</p>
+        <p class="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed hidden lg:block">${s.description}</p>
+        <div class="flex items-center justify-between mt-2.5">
+          <div>
+            <p class="text-[10px] text-slate-400">Starting from</p>
+            <p class="text-sm font-extrabold text-blue-600">${UI.formatCurrency(s.startingPrice)}<span class="text-[10px] font-medium text-slate-400"> ${s.unit}</span></p>
+          </div>
+          <span class="badge badge-amber !py-1"><i data-lucide="star" class="w-3 h-3 fill-amber-500 text-amber-500"></i>${s.rating}</span>
+        </div>
+      </div>
+    </a>
+  `).join("");
+
+  // Recent bookings
+  const bookings = Store.getBookings().slice(0, 3);
+  const recentWrap = document.getElementById("recent-bookings");
+  if (bookings.length === 0) {
+    recentWrap.innerHTML = `<div class="card p-6 text-center"><i data-lucide="calendar-x" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i><p class="text-sm text-slate-500">No bookings yet</p></div>`;
+  } else {
+    recentWrap.innerHTML = bookings.map(b => `
+      <a href="booking-details.html?id=${b.id}" class="card p-3.5 flex items-center justify-between hover-lift press-scale block">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+            <i data-lucide="stethoscope" class="w-5 h-5 text-blue-600"></i>
+          </div>
+          <div class="min-w-0">
+            <p class="font-semibold text-slate-800 text-sm truncate">${b.service}</p>
+            <p class="text-xs text-slate-500">${b.patient} • ${UI.formatDate(b.date)}</p>
+          </div>
+        </div>
+        ${UI.statusBadge(b.status)}
+      </a>
+    `).join("");
+  }
+
+  // FAQ preview
+  document.getElementById("faq-preview").innerHTML = MOCK.faqs.slice(0, 3).map(f => `
+    <div class="card p-3.5 flex items-center justify-between">
+      <p class="text-sm font-medium text-slate-700 pr-3">${f.q}</p>
+      <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 shrink-0"></i>
+    </div>
+  `).join("");
+
+  // Right panel (desktop)
+  document.getElementById("side-plan-name").textContent = MOCK.plans.find(p => p.id === Store.getPlan())?.name || "Premium";
+  document.getElementById("side-patients").innerHTML = Store.getPatients().map(p => `
+    <div class="flex items-center gap-2.5">
+      <img src="${p.photo}" class="w-8 h-8 rounded-full object-cover" />
+      <div class="min-w-0">
+        <p class="text-xs font-semibold text-slate-700 truncate">${p.name}</p>
+        <p class="text-[10px] text-slate-400">${p.relationship}</p>
+      </div>
+    </div>
+  `).join("");
+
+  const upcoming = Store.getBookings().find(b => b.status === "upcoming");
+  document.getElementById("side-upcoming").innerHTML = upcoming ? `
+    <div class="flex items-center gap-2.5 mb-2">
+      <i data-lucide="calendar-clock" class="w-4 h-4 text-blue-600"></i>
+      <p class="text-sm font-semibold text-slate-800">${upcoming.service}</p>
+    </div>
+    <p class="text-xs text-slate-500">${UI.formatDate(upcoming.date)} • ${upcoming.time}</p>
+    <p class="text-xs text-slate-500 mt-0.5">${upcoming.patient}</p>
+    <a href="booking-details.html?id=${upcoming.id}" class="btn-secondary w-full py-2 mt-3 text-xs block text-center">View Details</a>
+  ` : `<p class="text-xs text-slate-400">No upcoming bookings</p>`;
+
+  UI.icons();
+</script>
+</body>
+</html>

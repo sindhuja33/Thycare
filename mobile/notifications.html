@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Notifications — CareConnect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="css/design-system.css" />
+<link rel="stylesheet" href="css/animations.css" />
+</head>
+<body class="bg-[var(--canvas)]">
+
+<div class="app-frame">
+  <header class="app-topbar px-5 pb-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <a href="home.html" class="nav-btn"><i data-lucide="arrow-left" class="w-[18px] h-[18px]"></i></a>
+      <h1 class="font-extrabold text-[17px] text-[var(--ink-900)] tracking-tight">Notifications</h1>
+    </div>
+    <button onclick="markAllRead()" class="text-[12.5px] text-[var(--blue-600)] font-bold">Mark all read</button>
+  </header>
+
+  <main class="scroll-content px-5 pt-2">
+    <div id="notif-list" class="space-y-2"></div>
+  </main>
+</div>
+
+<nav id="floating-nav"></nav>
+
+<script src="js/mockData.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script>
+  UI.requireAuth();
+  UI.initShell("notifications");
+
+  const typeIcon = { success: "check-circle-2", info: "info", error: "alert-circle" };
+  const typeColor = { success: "bg-[var(--green-50)] text-[var(--green-600)]", info: "bg-[var(--blue-50)] text-[var(--blue-600)]", error: "bg-[var(--red-50)] text-[var(--red-600)]" };
+
+  function render() {
+    const notifs = Store.getNotifications();
+    document.getElementById("notif-list").innerHTML = notifs.map((n, i) => `
+      <div onclick="markRead(${n.id})" class="card p-3.5 flex items-start gap-3 press cursor-pointer anim-fade-up stagger-${(i%6)+1} ${!n.read ? "!border-l-[3px] !border-l-[var(--blue-500)]" : ""}">
+        <div class="w-9 h-9 rounded-2xl ${typeColor[n.type]} flex items-center justify-center shrink-0"><i data-lucide="${typeIcon[n.type]}" class="w-4 h-4"></i></div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-[13.5px] font-bold text-[var(--ink-800)]">${n.title}</p>
+            ${!n.read ? `<span class="w-2 h-2 rounded-full bg-[var(--blue-500)] shrink-0"></span>` : ""}
+          </div>
+          <p class="text-[12px] text-[var(--ink-500)] mt-0.5 leading-relaxed font-medium">${n.body}</p>
+          <p class="text-[10.5px] text-[var(--ink-400)] mt-1.5 font-semibold">${n.time}</p>
+        </div>
+      </div>`).join("");
+    UI.icons();
+  }
+
+  function markRead(id) {
+    Store.setNotifications(Store.getNotifications().map(n => n.id === id ? { ...n, read: true } : n));
+    render();
+  }
+  function markAllRead() {
+    Store.setNotifications(Store.getNotifications().map(n => ({ ...n, read: true })));
+    UI.toast("All notifications marked as read", "success");
+    render();
+  }
+  render();
+</script>
+</body>
+</html>
