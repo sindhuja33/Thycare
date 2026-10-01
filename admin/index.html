@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CareConnect Admin · Sign in</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <section class="login">
+    <form class="login-card" id="loginForm">
+      <div class="logo">C</div>
+      <h1>CareConnect Admin</h1>
+      <p class="muted">Sign in to manage requests and caregivers.</p>
+      <label class="field"><span>Email</span><input id="email" type="email" value="admin@careconnect.in" required></label>
+      <label class="field"><span>Password</span><input id="password" type="password" value="admin123" required></label>
+      <div class="err" id="loginErr"></div>
+      <button class="btn primary block" type="submit">Sign in</button>
+      <p class="muted small" style="margin-top:14px">Prototype login: admin@careconnect.in / admin123</p>
+    </form>
+  </section>
+  <script src="js/data.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

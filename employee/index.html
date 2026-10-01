@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CareConnect Employee · Sign in</title>
+  <link rel="stylesheet" href="css/employee.css">
+</head>
+<body>
+  <section class="login">
+    <h1>CareConnect<br>Employee</h1>
+    <p class="lead">See and manage the jobs assigned to you.</p>
+    <form class="login-card" id="loginForm">
+      <label class="field"><span>Who are you?</span><select id="emp"></select></label>
+      <label class="field"><span>PIN</span><input id="pin" type="password" inputmode="numeric" value="1234" required></label>
+      <div class="err" id="loginErr"></div>
+      <button class="btn primary block" type="submit" style="margin-top:8px">Sign in</button>
+      <p class="muted small" style="margin-top:14px">Prototype: choose your name, PIN 1234.</p>
+    </form>
+  </section>
+  <script src="../admin/js/data.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>
